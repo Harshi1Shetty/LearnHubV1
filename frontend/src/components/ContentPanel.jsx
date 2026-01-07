@@ -1,12 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Play, BookOpen, Brain, GraduationCap, Loader2, ExternalLink, Trophy, Image as ImageIcon } from 'lucide-react';
+import { 
+  Play, 
+  BookOpen, 
+  Brain, 
+  GraduationCap, 
+  Loader2, 
+  Trophy, 
+  Volume2, 
+  Square,
+  X 
+} from 'lucide-react';
 import QuizModal from './QuizModal';
 import './ContentPanel.css';
 
 const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMode, difficulty, language, roadmapId }) => {
   const [showQuiz, setShowQuiz] = useState(false);
-  
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [enlargedImg, setEnlargedImg] = useState(null); // State for light-box
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    };
+  }, [subtopic]);
+
+  const speakContent = () => {
+    if (!data?.content) return;
+    window.speechSynthesis.cancel();
+    const text = data.content.replace(/[#_*`>-]/g, '').replace(/\n+/g, ' ').trim();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    setTimeout(() => { window.speechSynthesis.speak(utterance); }, 250);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
   if (!subtopic) {
     return (
       <div className="content-panel-empty">
@@ -21,38 +59,46 @@ const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMod
 
   return (
     <div className="content-panel-container">
-      {/* Header */}
+      {/* IMAGE LIGHTBOX OVERLAY */}
+      {enlargedImg && (
+        <div className="image-lightbox" onClick={() => setEnlargedImg(null)}>
+          <button className="close-lightbox"><X size={32} /></button>
+          <img src={enlargedImg} alt="Enlarged view" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
       <div className="content-panel-header">
-        <h2 className="content-title">{subtopic}</h2>
-        <p className="content-subtitle">{topic}</p>
+        <div className="flex justify-between items-start w-full">
+          <div>
+            <h2 className="content-title">{subtopic}</h2>
+            <p className="content-subtitle">{topic}</p>
+          </div>
+          
+          {data && !loading && (
+            <button
+              onClick={isSpeaking ? stopSpeaking : speakContent}
+              className={`tts-toggle ${isSpeaking ? 'speaking' : ''}`}
+              title={isSpeaking ? "Stop Reading" : "Read Aloud"}
+            >
+              {isSpeaking ? <Square size={18} /> : <Volume2 size={18} />}
+              <span>{isSpeaking ? "Stop" : "Read"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Mode Selector */}
       <div className="mode-selector">
-        <button 
-          onClick={() => onModeChange('story')} 
-          className={`mode-button ${currentMode === 'story' ? 'mode-button-active mode-button-story' : 'mode-button-inactive mode-button-story-inactive'}`}
-        >
-          <BookOpen size={16} />
-          <span>Story Mode</span>
+        <button onClick={() => onModeChange('story')} className={`mode-button ${currentMode === 'story' ? 'mode-button-active mode-button-story' : 'mode-button-inactive'}`}>
+          <BookOpen size={16} /> <span>Story Mode</span>
         </button>
-        <button 
-          onClick={() => onModeChange('deep')} 
-          className={`mode-button ${currentMode === 'deep' ? 'mode-button-active mode-button-deep' : 'mode-button-inactive mode-button-deep-inactive'}`}
-        >
-          <Brain size={16} />
-          <span>Deep Dive</span>
+        <button onClick={() => onModeChange('deep')} className={`mode-button ${currentMode === 'deep' ? 'mode-button-active mode-button-deep' : 'mode-button-inactive'}`}>
+          <Brain size={16} /> <span>Deep Dive</span>
         </button>
-        <button 
-          onClick={() => onModeChange('exam')} 
-          className={`mode-button ${currentMode === 'exam' ? 'mode-button-active mode-button-exam' : 'mode-button-inactive mode-button-exam-inactive'}`}
-        >
-          <GraduationCap size={16} />
-          <span>Exam Prep</span>
+        <button onClick={() => onModeChange('exam')} className={`mode-button ${currentMode === 'exam' ? 'mode-button-active mode-button-exam' : 'mode-button-inactive'}`}>
+          <GraduationCap size={16} /> <span>Exam Prep</span>
         </button>
       </div>
 
-      {/* Content Area */}
       <div className="content-area">
         {loading ? (
           <div className="content-loading">
@@ -61,74 +107,40 @@ const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMod
           </div>
         ) : data ? (
           <div className="content-body">
-            {/* Images Section */}
+            
+            {/* 3-COLUMN IMAGE GRID */}
             {data.images?.length > 0 && (
-              <div className="content-section">
-                <div className="section-header">
-                  <ImageIcon size={18} className="section-icon" />
-                  <h3 className="section-title">Visual Aids</h3>
-                </div>
-                <div className="images-grid">
-                  {data.images.map((img, i) => (
-                    <div key={i} className="image-card">
-                      <img 
-                        src={img} 
-                        alt={`Visual aid ${i + 1}`}
-                        className="image-content"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
+              <div className="image-grid-3-col">
+                {data.images.map((img, i) => (
+                  <div key={i} className="grid-image-wrapper" onClick={() => setEnlargedImg(img)}>
+                    <img src={img} alt={`Visual aid ${i+1}`} />
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Videos Section */}
+            {/* VIDEO LINKS */}
             {data.videos?.length > 0 && (
-              <div className="content-section">
-                <div className="section-header">
-                  <Play size={18} className="section-icon" />
-                  <h3 className="section-title">Related Videos</h3>
-                </div>
-                <div className="videos-list">
-                  {data.videos.map((vid, i) => (
-                    <a 
-                      key={i} 
-                      href={vid} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="video-link"
-                    >
-                      <div className="video-icon-wrapper">
-                        <Play size={20} className="video-icon" />
-                      </div>
-                      <span className="video-title">{vid.replace('https://www.youtube.com/watch?v=', 'YouTube: ')}</span>
-                      <ExternalLink size={16} className="external-icon" />
-                    </a>
-                  ))}
-                </div>
+              <div className="video-grid">
+                {data.videos.map((v, i) => (
+                  <a key={i} href={v} target="_blank" rel="noopener noreferrer" className="video-card">
+                    <Play size={16} fill="currentColor" />
+                    <span>Tutorial {i+1}</span>
+                  </a>
+                ))}
               </div>
             )}
 
-            {/* Main Content */}
-            <div className="content-section">
-              <div className="markdown-content">
-                <ReactMarkdown>{data.content}</ReactMarkdown>
-              </div>
+            <div className="markdown-content">
+              <ReactMarkdown>{data.content}</ReactMarkdown>
             </div>
           </div>
         ) : null}
       </div>
 
-      {/* Sticky Quiz Button */}
       {data && !loading && (
         <div className="quiz-button-container">
-          <button
-            onClick={() => setShowQuiz(true)}
-            className="quiz-button"
-          >
+          <button onClick={() => setShowQuiz(true)} className="quiz-button">
             <Trophy size={20} />
             <span>Test Your Knowledge</span>
           </button>
