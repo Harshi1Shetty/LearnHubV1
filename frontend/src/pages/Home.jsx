@@ -46,6 +46,18 @@ const Home = () => {
     window.location.href = `/roadmap/${id}`;
   };
 
+  const calculateProgress = (roadmap) => {
+    return Math.floor(Math.random() * 100);
+  };
+
+  const countInProgress = () => {
+    return roadmaps.filter(r => calculateProgress(r) < 100).length;
+  };
+
+  const countCompleted = () => {
+    return roadmaps.filter(r => calculateProgress(r) === 100).length;
+  };
+
   return (
     <div className="home-container">
       <header className="home-header">
@@ -81,7 +93,11 @@ const Home = () => {
                 <p className="stat-label">Learning Paths</p>
               </div>
             </div>
-            <div className="stat-card">
+            <div 
+              className="stat-card" 
+              style={{ cursor: 'pointer' }}
+              onClick={() => window.location.href = '/courses/inprogress'}
+            >
               <div className="stat-icon stat-icon-green">
                 <TrendingUp size={24} />
               </div>
@@ -90,13 +106,17 @@ const Home = () => {
                 <p className="stat-label">Active Learning</p>
               </div>
             </div>
-            <div className="stat-card">
+            <div 
+              className="stat-card"
+              style={{ cursor: 'pointer' }}
+              onClick={() => window.location.href = '/courses/completed'}
+            >
               <div className="stat-icon stat-icon-purple">
                 <Clock size={24} />
               </div>
               <div className="stat-content">
-                <p className="stat-value">Personalized</p>
-                <p className="stat-label">AI-Driven Paths</p>
+                <p className="stat-value">Completed Courses</p>
+                <p className="stat-label">Finished Paths</p>
               </div>
             </div>
           </div>
@@ -139,33 +159,68 @@ const Home = () => {
             </div>
           ) : (
             <div className="roadmaps-grid">
-              {roadmaps.map((roadmap) => (
-                <div 
-                  key={roadmap.id}
-                  onClick={() => handleRoadmapClick(roadmap.id)}
-                  className="roadmap-card"
-                >
-                  <div className="roadmap-header">
-                    <div className="roadmap-icon">
-                      <BookOpen size={20} />
+              {roadmaps.map((roadmap) => {
+                const progress = calculateProgress(roadmap);
+                return (
+                  <div 
+                    key={roadmap.id}
+                    onClick={() => handleRoadmapClick(roadmap.id)}
+                    className="roadmap-card"
+                  >
+                    <div className="roadmap-header">
+                      <div className="roadmap-icon">
+                        <BookOpen size={20} />
+                      </div>
+                      <span className="roadmap-language">{roadmap.language}</span>
                     </div>
-                    <span className="roadmap-language">{roadmap.language}</span>
+                    <h3 className="roadmap-title">{roadmap.topic}</h3>
+                    
+                    <div style={{ marginBottom: '16px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                          Progress
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#0f172a', fontWeight: '600' }}>
+                          {progress}%
+                        </span>
+                      </div>
+                      <div style={{
+                        width: '100%',
+                        height: '6px',
+                        backgroundColor: '#e2e8f0',
+                        borderRadius: '9999px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${progress}%`,
+                          height: '100%',
+                          backgroundColor: progress === 100 ? '#16a34a' : '#2563eb',
+                          transition: 'width 0.3s ease',
+                          borderRadius: '9999px'
+                        }} />
+                      </div>
+                    </div>
+
+                    <div className="roadmap-footer">
+                      <span className={`difficulty-badge difficulty-${roadmap.difficulty.toLowerCase()}`}>
+                        {roadmap.difficulty}
+                      </span>
+                      <span className="roadmap-date">
+                        {new Date(roadmap.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
                   </div>
-                  <h3 className="roadmap-title">{roadmap.topic}</h3>
-                  <div className="roadmap-footer">
-                    <span className={`difficulty-badge difficulty-${roadmap.difficulty.toLowerCase()}`}>
-                      {roadmap.difficulty}
-                    </span>
-                    <span className="roadmap-date">
-                      {new Date(roadmap.created_at).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
