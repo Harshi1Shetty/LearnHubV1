@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { login as apiLogin, signup as apiSignup } from '../api/auth';
-import { Brain, Target, TrendingUp, BarChart3, CheckCircle, ArrowRight } from 'lucide-react';
+import { Brain, ArrowRight } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
@@ -36,7 +36,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      {/* Left Side - Branding & Info */}
+      {/* Left Side - Branding */}
       <div className="branding-section">
         {/* Subtle background pattern */}
         <div className="background-pattern">
@@ -47,71 +47,44 @@ const Login = () => {
         <div className="branding-content">
           {/* Logo */}
           <div className="logo-container">
-            <div className="logo-icon">
-              <Brain className="icon" />
+            <div className="logo-icon" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
+              <Brain className="icon" style={{ color: 'white' }} />
             </div>
-            <span className="logo-text">LearnHub</span>
+            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>LearnHub</span>
           </div>
 
           {/* Main Heading */}
           <div className="heading-container">
             <h1 className="main-heading">
-              Personalized Learning.<br />
-              Powered by AI.
+              Welcome to<br />
+              LearnHub
             </h1>
             <p className="main-subtext">
-              Adaptive learning paths, intelligent assessments, and AI-generated roadmaps tailored to your goals.
+              Your self-paced AI learning companion. Build knowledge systematically with personalized learning journeys, structured syllabus & revision, and comprehensive interview preparation.
             </p>
           </div>
 
-          {/* Features */}
-          <div className="features-list">
-            <div className="feature-item">
-              <div className="feature-icon feature-icon-blue">
-                <Target className="icon" />
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">AI-Generated Learning Roadmaps</h3>
-                <p className="feature-description">Personalized pathways based on your current knowledge and goals</p>
-              </div>
-            </div>
-
-            <div className="feature-item">
-              <div className="feature-icon feature-icon-indigo">
-                <BarChart3 className="icon" />
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">Skill Gap Analysis</h3>
-                <p className="feature-description">Identify knowledge gaps and receive targeted recommendations</p>
-              </div>
-            </div>
-
-            <div className="feature-item">
-              <div className="feature-icon feature-icon-violet">
-                <TrendingUp className="icon" />
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">Progress Insights & Tracking</h3>
-                <p className="feature-description">Visualize your learning journey with detailed analytics</p>
-              </div>
-            </div>
-
-            <div className="feature-item">
-              <div className="feature-icon feature-icon-purple">
-                <CheckCircle className="icon" />
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">Personalized Quizzes</h3>
-                <p className="feature-description">Adaptive assessments that adjust to your skill level in real-time</p>
-              </div>
-            </div>
+          {/* Trust Elements - Minimal Text Block */}
+          <div style={{
+            marginTop: '3rem',
+            paddingLeft: '1rem',
+            borderLeft: '3px solid rgba(59, 130, 246, 0.3)',
+          }}>
+            <p style={{
+              color: '#cbd5e1',
+              fontSize: '0.9375rem',
+              lineHeight: '1.8',
+              margin: 0
+            }}>
+              Personalized learning journeys tailored to your goals. Structured syllabus with intelligent revision scheduling. Interview preparation with AI-powered practice sessions.
+            </p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="branding-footer">
           <p className="footer-text">
-            Trusted by over 50,000 learners worldwide
+            Empowering students to learn smarter, not harder
           </p>
         </div>
       </div>
@@ -121,20 +94,22 @@ const Login = () => {
         <div className="form-wrapper">
           {/* Mobile Logo */}
           <div className="mobile-logo">
-            <div className="logo-icon">
-              <Brain className="icon" />
+            <div className="logo-icon" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
+              <Brain className="icon" style={{ color: 'white' }} />
             </div>
-            <span className="logo-text">LearnHub</span>
+            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>LearnHub</span>
           </div>
 
           {/* Auth Card */}
           <div className="auth-card">
             <div className="auth-header">
               <h2 className="auth-title">
-                {isLogin ? 'Welcome Back' : 'Create Account'}
+                {isLogin ? 'Welcome Back' : 'Create Your Account'}
               </h2>
               <p className="auth-subtitle">
-                {isLogin ? 'Access your personalized learning journey' : 'Start your adaptive learning experience'}
+                {isLogin 
+                  ? 'Sign in to continue your learning journey' 
+                  : 'Start your personalized learning experience today'}
               </p>
             </div>
 
@@ -193,20 +168,17 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Mobile Features Preview */}
+          {/* Mobile Trust Elements */}
           <div className="mobile-features">
-            <div className="mobile-feature-item">
-              <CheckCircle className="mobile-feature-icon" />
-              <span>AI-powered adaptive learning</span>
-            </div>
-            <div className="mobile-feature-item">
-              <CheckCircle className="mobile-feature-icon" />
-              <span>Personalized study roadmaps</span>
-            </div>
-            <div className="mobile-feature-item">
-              <CheckCircle className="mobile-feature-icon" />
-              <span>Progress tracking & analytics</span>
-            </div>
+            <p style={{
+              fontSize: '0.8125rem',
+              color: '#64748b',
+              lineHeight: '1.6',
+              textAlign: 'center',
+              margin: 0
+            }}>
+              Personalized learning journeys • Structured syllabus & revision • Interview preparation
+            </p>
           </div>
         </div>
       </div>
