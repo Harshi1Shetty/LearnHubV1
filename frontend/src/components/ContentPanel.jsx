@@ -9,7 +9,8 @@ import {
   Trophy, 
   Volume2, 
   Square,
-  X 
+  X,
+  Youtube
 } from 'lucide-react';
 import QuizModal from './QuizModal';
 import './ContentPanel.css';
@@ -122,12 +123,17 @@ const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMod
             {/* VIDEO LINKS */}
             {data.videos?.length > 0 && (
               <div className="video-grid">
-                {data.videos.map((v, i) => (
-                  <a key={i} href={v} target="_blank" rel="noopener noreferrer" className="video-card">
-                    <Play size={16} fill="currentColor" />
-                    <span>Tutorial {i+1}</span>
-                  </a>
-                ))}
+                {data.videos.map((v, i) => {
+                  const link = typeof v === 'string' ? v : v.link;
+                  const title = typeof v === 'string' ? `Tutorial ${i+1}` : v.title;
+                  
+                  return (
+                    <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="video-card">
+                      <Youtube size={20} className="text-red-600" fill="currentColor" />
+                      <span className="video-title truncate">{title}</span>
+                    </a>
+                  );
+                })}
               </div>
             )}
 

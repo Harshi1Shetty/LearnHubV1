@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
-from app.agents.quiz import generate_quiz_questions
+from app.agents.quiz import generate_quiz_questions, generate_quiz_review
 from app.agents.digital_twin import update_knowledge_state
 from app.db import get_db
 import json
@@ -85,13 +85,23 @@ async def submit_quiz(request: QuizSubmitRequest):
             
         score_percentage = int((correct_count / total_questions) * 100) if total_questions > 0 else 0
         
-        # 2. Save Attempt to DB
+        # 2. Generate Review (Async but awaited here for simplicity in response)
+        review_text = await generate_quiz_review(
+            request.topic,
+            request.node_label,
+            score_percentage,
+            total_questions,
+            request.total_time,
+            attempt_data
+        )
+
+        # 3. Save Attempt to DB
         with get_db() as conn:
             c = conn.cursor()
             c.execute("""
                 INSERT INTO quiz_attempts 
-                (user_id, roadmap_id, node_label, score, total_questions, time_taken_seconds, attempt_data_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                (user_id, roadmap_id, node_label, score, total_questions, time_taken_seconds, attempt_data_json, review_text)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 request.user_id, 
                 request.roadmap_id, 
@@ -99,11 +109,12 @@ async def submit_quiz(request: QuizSubmitRequest):
                 score_percentage, 
                 total_questions, 
                 request.total_time, 
-                json.dumps(attempt_data)
+                json.dumps(attempt_data),
+                review_text
             ))
             conn.commit()
             
-        # 3. Update Digital Twin
+        # 4. Update Digital Twin
         knowledge_update = await update_knowledge_state(
             request.user_id,
             request.topic,
@@ -116,7 +127,8 @@ async def submit_quiz(request: QuizSubmitRequest):
             "score": score_percentage,
             "correct_count": correct_count,
             "total_questions": total_questions,
-            "knowledge_update": knowledge_update
+            "knowledge_update": knowledge_update,
+            "review": review_text
         }
         
     except Exception as e:

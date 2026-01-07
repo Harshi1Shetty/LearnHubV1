@@ -9,7 +9,7 @@ from app.models.content import ContentResponse
 # Initialize Ollama
 llm = ChatOllama(
     base_url=settings.OLLAMA_BASE_URL,
-    model="llama3.2:3b",
+    model="llama3:8b",
     temperature=0.7
 )
 
@@ -51,7 +51,13 @@ async def generate_content(topic: str, subtopic: str, mode: str, difficulty: str
         # Search for videos
         vid_results = search_serper(f"{subtopic} {topic} explanation", "videos")
         if "videos" in vid_results:
-            videos = [vid["link"] for vid in vid_results["videos"][:3]]
+            # Extract title and link
+            videos = []
+            for vid in vid_results["videos"][:3]:
+                videos.append({
+                    "title": vid.get("title", "Video Tutorial"),
+                    "link": vid.get("link", "#")
+                })
 
     # 2. Generate Content
     system_prompt = ""

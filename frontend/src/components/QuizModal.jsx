@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Clock, CheckCircle, XCircle, ArrowRight, Loader2, Trophy, Award, TrendingUp } from 'lucide-react';
+import { X, Clock, CheckCircle, XCircle, ArrowRight, Loader2, Trophy, Award, TrendingUp, Bot, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { generateQuiz, submitQuiz } from '../api/quiz';
 import { useAuth } from '../context/AuthContext';
 import './QuizModal.css';
@@ -14,6 +15,7 @@ const QuizModal = ({ isOpen, onClose, topic, subtopic, difficulty, language, roa
   const [startTime, setStartTime] = useState(null);
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   const timerRef = useRef(null);
 
@@ -26,6 +28,7 @@ const QuizModal = ({ isOpen, onClose, topic, subtopic, difficulty, language, roa
       setAnswers({});
       setTimeTaken({});
       setResult(null);
+      setShowReview(false);
     }
   }, [isOpen]);
 
@@ -130,6 +133,27 @@ const QuizModal = ({ isOpen, onClose, topic, subtopic, difficulty, language, roa
               </button>
             </div>
           ) : result ? (
+            showReview ? (
+              // Review View
+              <div className="review-view">
+                <div className="review-header">
+                  <div className="review-icon-wrapper">
+                    <Bot className="review-icon" />
+                  </div>
+                  <h3 className="review-title">AI Performance Review</h3>
+                </div>
+                <div className="review-content">
+                  <ReactMarkdown>{result.review}</ReactMarkdown>
+                </div>
+                <button 
+                  onClick={() => setShowReview(false)}
+                  className="back-to-result-button"
+                >
+                  <ArrowLeft size={16} />
+                  Back to Score
+                </button>
+              </div>
+            ) : (
             // Result View
             <div className="result-view">
               <div className="result-icon-wrapper">
@@ -164,13 +188,23 @@ const QuizModal = ({ isOpen, onClose, topic, subtopic, difficulty, language, roa
                 </div>
               </div>
 
-              <button 
-                onClick={onClose}
-                className="result-close-button"
-              >
-                Continue Learning
-              </button>
+              <div className="result-actions">
+                <button 
+                  onClick={() => setShowReview(true)}
+                  className="see-review-button"
+                >
+                  <Bot size={18} />
+                  See AI Review
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="result-close-button"
+                >
+                  Continue Learning
+                </button>
+              </div>
             </div>
+            )
           ) : (
             // Question View
             <div className="question-view">
@@ -213,7 +247,7 @@ const QuizModal = ({ isOpen, onClose, topic, subtopic, difficulty, language, roa
         </div>
 
         {/* Footer */}
-        {!loading && !result && (
+        {!loading && !result && questions.length > 0 && (
           <div className="quiz-modal-footer">
             <button
               onClick={handleNext}

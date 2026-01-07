@@ -56,11 +56,18 @@ def init_db():
             total_questions INTEGER NOT NULL,
             time_taken_seconds INTEGER NOT NULL,
             attempt_data_json TEXT NOT NULL, -- Stores questions, user answers, time per question
+            review_text TEXT, -- AI generated review
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id),
             FOREIGN KEY (roadmap_id) REFERENCES roadmaps (id)
         )
     ''')
+
+    # Migration for existing table
+    try:
+        c.execute("ALTER TABLE quiz_attempts ADD COLUMN review_text TEXT")
+    except sqlite3.OperationalError:
+        pass # Column likely already exists
 
     # User Knowledge Table (Digital Twin Memory)
     c.execute('''

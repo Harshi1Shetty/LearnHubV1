@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any, Union
 
 class ContentRequest(BaseModel):
     topic: str
@@ -8,10 +8,10 @@ class ContentRequest(BaseModel):
     difficulty: str = "Normal"
     language: str = "English"
     images: Optional[List[str]] = None
-    videos: Optional[List[str]] = None
+    videos: Optional[List[Union[str, dict]]] = None
 
 class ContentResponse(BaseModel):
     content: str
     images: List[str] = []
-    videos: List[str] = []
+    videos: List[Union[str, dict]] = []
     quiz_questions: List[dict] = []

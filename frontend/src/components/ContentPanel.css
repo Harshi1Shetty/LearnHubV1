@@ -142,6 +142,20 @@
   background: #ffffff;
   border-color: #ef4444;
   color: #ef4444;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.video-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.video-card svg {
+  color: #ef4444; /* Youtube Red */
+  flex-shrink: 0;
 }
 
 /* MODE SELECTOR */

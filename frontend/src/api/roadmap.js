@@ -36,3 +36,15 @@ export const getRoadmap = async (roadmapId) => {
     throw error;
   }
 };
+export const updateRoadmap = async (id, nodes, edges) => {
+  try {
+    const response = await axios.put(`${API_URL}/roadmap/${id}/update`, {
+      nodes,
+      edges
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roadmap:", error);
+    throw error;
+  }
+};

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from app.models.roadmap import RoadmapRequest, RoadmapResponse
+from app.models.roadmap import RoadmapRequest, RoadmapResponse, RoadmapUpdateRequest
 from app.agents.planner import generate_roadmap
 from app.db import get_db
 import json
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
 router = APIRouter()
 
@@ -61,6 +61,29 @@ async def get_roadmap(roadmap_id: int):
             inject_progress(data["roadmap"])
             
         return data
+
+@router.put("/{roadmap_id}/update")
+async def update_roadmap_structure(roadmap_id: int, request: RoadmapUpdateRequest):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("SELECT roadmap_json FROM roadmaps WHERE id = ?", (roadmap_id,))
+        row = c.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Roadmap not found")
+        
+        # Load existing data to preserve topic, etc.
+        current_data = json.loads(row["roadmap_json"])
+        
+        # Merge new nodes/edges
+        current_data["nodes"] = request.nodes
+        current_data["edges"] = request.edges
+        
+        # Save back to DB
+        new_json = json.dumps(current_data)
+        c.execute("UPDATE roadmaps SET roadmap_json = ? WHERE id = ?", (new_json, roadmap_id))
+        conn.commit()
+        
+    return {"status": "success"}
 
 class CreateRoadmapRequest(RoadmapRequest):
     user_id: int

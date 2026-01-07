@@ -19,3 +19,9 @@ class RoadmapResponse(BaseModel):
     difficulty: str = "Normal"
     language: str = "English"
     roadmap: List[RoadmapNode]
+    nodes: Optional[List[dict]] = None
+    edges: Optional[List[dict]] = None
+
+class RoadmapUpdateRequest(BaseModel):
+    nodes: List[dict]
+    edges: List[dict]

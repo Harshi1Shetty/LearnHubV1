@@ -8,7 +8,7 @@ from app.models.roadmap import RoadmapResponse, RoadmapNode
 # Initialize Ollama
 llm = ChatOllama(
     base_url=settings.OLLAMA_BASE_URL,
-    model="llama3.2:3b", # Or mistral, make sure this matches what the user has installed
+    model="llama3:8b", # Or mistral, make sure this matches what the user has installed
     format="json",
     temperature=0.2
 )

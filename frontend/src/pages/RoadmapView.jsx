@@ -8,13 +8,15 @@ import ReactFlow, {
   addEdge,
   Handle,
   Position,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { getRoadmap } from '../api/roadmap';
+import { getRoadmap, updateRoadmap } from '../api/roadmap';
 import { generateContent } from '../api/content';
 import ContentPanel from '../components/ContentPanel';
-import { Brain, ArrowLeft, Loader2, BookOpen } from 'lucide-react';
+import { Brain, ArrowLeft, Loader2, BookOpen, Plus } from 'lucide-react';
 import './RoadmapView.css';
 
 const nodeWidth = 180;
@@ -84,13 +86,16 @@ const CustomNode = ({ data, selected }) => {
   );
 };
 
-const RoadmapView = () => {
+const nodeTypes = { custom: CustomNode };
+
+const RoadmapContent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [roadmapData, setRoadmapData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { project, screenToFlowPosition, getNodes, getZoom, getViewport } = useReactFlow();
   
   const [selectedNode, setSelectedNode] = useState(null);
   const [contentData, setContentData] = useState(null);
@@ -98,13 +103,22 @@ const RoadmapView = () => {
   const [currentMode, setCurrentMode] = useState('story');
   const contentCache = useRef({});
 
-  const nodeTypes = React.useMemo(() => ({ custom: CustomNode }), []);
-
   useEffect(() => {
     fetchRoadmapData();
   }, [id]);
 
   const processRoadmapData = (data) => {
+    // If we have saved nodes/edges, use them directly
+    if (data.nodes && data.edges) {
+       // Need to ensure custom types are set correctly if not saved in DB
+       const formattedNodes = data.nodes.map(n => ({
+         ...n,
+         type: 'custom', // Ensure type is custom
+         data: { ...n.data, nodeId: n.id }
+       }));
+       return { nodes: formattedNodes, edges: data.edges, isSavedState: true };
+    }
+
     const newNodes = [];
     const newEdges = [];
     
@@ -137,17 +151,23 @@ const RoadmapView = () => {
     };
 
     data.roadmap.forEach((rootNode) => traverse(rootNode));
-    return { nodes: newNodes, edges: newEdges };
+    return { nodes: newNodes, edges: newEdges, isSavedState: false };
   };
 
   const fetchRoadmapData = async () => {
     try {
       const data = await getRoadmap(id);
       setRoadmapData(data);
-      const { nodes: rawNodes, edges: rawEdges } = processRoadmapData(data);
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(rawNodes, rawEdges, 'TB');
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
+      const { nodes: processedNodes, edges: processedEdges, isSavedState } = processRoadmapData(data);
+      
+      if (isSavedState) {
+          setNodes(processedNodes);
+          setEdges(processedEdges);
+      } else {
+          const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(processedNodes, processedEdges, 'TB');
+          setNodes(layoutedNodes);
+          setEdges(layoutedEdges);
+      }
     } catch (error) {
       console.error("Failed to fetch roadmap", error);
     } finally {
@@ -155,9 +175,170 @@ const RoadmapView = () => {
     }
   };
 
+  const saveRoadmapState = async (currentNodes, currentEdges) => {
+    try {
+      // Strip out non-serializable parts if any, but ReactFlow nodes are usually fine
+      // We need to save the exact position
+      await updateRoadmap(id, currentNodes, currentEdges);
+    } catch (error) {
+      console.error("Failed to save roadmap state", error);
+    }
+  };
+
+  const handleAddNode = useCallback(() => {
+    const label = window.prompt("Enter title for new subtopic:");
+    if (!label) return;
+
+    // Place in center of view approximately (using viewport center or fixed offset from first node)
+    // A better way is to find a gap or just place at top left of view
+    const { x, y, zoom } = getViewport();
+    // Center of screen relative to flow
+    // screen center is roughly (window.innerWidth / 2, window.innerHeight / 2)
+    // flowX = (screenX - x) / zoom
+    
+    // Simplification: Place it near the last selected node or at (100, 100) if none
+    let spawnX = 100;
+    let spawnY = 100;
+    
+    if (nodes.length > 0) {
+        // Just offset from first node for now, or find center
+        spawnX = -x / zoom + 250; 
+        spawnY = -y / zoom + 100;
+    }
+
+    const newNodeId = `user-node-${Date.now()}`;
+    const newNode = {
+      id: newNodeId,
+      type: 'custom',
+      position: { x: spawnX, y: spawnY },
+      data: { 
+          label: label, 
+          nodeId: newNodeId, 
+          status: 'novice', 
+          mastery_score: 0 
+      },
+      // Important to set draggable true (default)
+    };
+
+    const newNodes = [...nodes, newNode];
+    setNodes(newNodes);
+    
+    // We don't connect immediately, user drags it to desired location
+    // Or we could connect to nearest immediately. Let's do nearest immediately for better UX
+    
+    let nearestNode = null;
+    let minDistance = Infinity;
+
+    // Use current nodes state
+    nodes.forEach(node => {
+      const dx = node.position.x - spawnX;
+      const dy = node.position.y - spawnY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestNode = node;
+      }
+    });
+
+    let newEdges = [...edges];
+    if (nearestNode) {
+         const newEdge = {
+          id: `e${nearestNode.id}-${newNodeId}`,
+          source: nearestNode.id,
+          target: newNodeId,
+          type: 'smoothstep',
+          style: { stroke: '#cbd5e1', strokeWidth: 2 },
+        };
+        newEdges.push(newEdge);
+    }
+
+    setEdges(newEdges);
+    saveRoadmapState(newNodes, newEdges);
+
+  }, [nodes, edges, getViewport, id]);
+
+  const onNodeDragStop = useCallback(
+    (event, node, nodes) => {
+        // When drag stops, find nearest node and re-connect
+        // We only want to auto-connect 'custom' nodes or maybe all nodes?
+        // Let's stick to only affecting edges for this specific node
+        
+        // Find nearest node excluding itself and its own descendants (to prevent cycles - simple check: exclude self)
+        // For simple tree strictness we should avoid descendants, but for general graph it's okay.
+        // Let's just find nearest node that is NOT self.
+        
+        let nearestNode = null;
+        let minDistance = Infinity;
+        
+        // Helper to get distance
+        const getDistance = (n1, n2) => {
+            const dx = n1.position.x - n2.position.x;
+            const dy = n1.position.y - n2.position.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        // We need to access the LATEST nodes state. 
+        // ReactFlow onNodeDragStop passes (event, node, nodes). stored in 'nodes' param (v11) is list of *all* nodes? 
+        // Docs say: onNodeDragStop(event, node, nodes) 
+        // node is the dragged node. nodes is the array of all nodes.
+
+        // Wait, v11 onNodeDragStop signature is (event, node, nodes).
+        
+        // NOTE: If we want to change parent, we remove old incoming edge and add new one.
+        // Identify incoming edge: target == node.id
+        
+        const allNodes = getNodes(); // Use getter to be safe or use provided nodes
+        
+        allNodes.forEach(n => {
+            if (n.id === node.id) return;
+            const d = getDistance(node, n);
+            if (d < minDistance) {
+                minDistance = d;
+                nearestNode = n;
+            }
+        });
+
+        if (nearestNode) {
+            // Check if edge already exists
+            const edgeExists = edges.some(e => 
+                (e.source === nearestNode.id && e.target === node.id) ||
+                (e.source === node.id && e.target === nearestNode.id)
+            );
+
+            if (!edgeExists) {
+                // Remove OLD parent edge (incoming to this node)
+                // We assume tree structure where node has 1 parent. 
+                const otherEdges = edges.filter(e => e.target !== node.id);
+                
+                const newEdge = {
+                    id: `e${nearestNode.id}-${node.id}-${Date.now()}`,
+                    source: nearestNode.id,
+                    target: node.id,
+                    type: 'smoothstep',
+                    style: { stroke: '#cbd5e1', strokeWidth: 2 },
+                };
+                
+                const updatedEdges = [...otherEdges, newEdge];
+                setEdges(updatedEdges);
+                saveRoadmapState(allNodes, updatedEdges);
+            } else {
+                // Just save new position
+                 saveRoadmapState(allNodes, edges);
+            }
+        } else {
+             saveRoadmapState(allNodes, edges);
+        }
+    },
+    [edges, getNodes, id]
+  );
+  
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+    (params) => {
+      const newEdges = addEdge(params, edges);
+      setEdges(newEdges);
+      saveRoadmapState(nodes, newEdges);
+    },
+    [edges, nodes, id],
   );
 
   const getExistingMedia = (nodeLabel) => {
@@ -273,6 +454,24 @@ const RoadmapView = () => {
             <BookOpen size={18} className="roadmap-icon" />
             <h2 className="roadmap-title">{roadmapData?.topic}</h2>
           </div>
+          <div className="header-actions" style={{ marginLeft: '1rem' }}>
+             <button onClick={handleAddNode} className="add-node-btn" style={{
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '0.5rem',
+                 padding: '0.5rem 1rem',
+                 backgroundColor: '#3b82f6',
+                 color: 'white',
+                 border: 'none',
+                 borderRadius: '0.5rem',
+                 cursor: 'pointer',
+                 fontSize: '0.875rem',
+                 fontWeight: '500'
+             }}>
+                <Plus size={16} />
+                Add Topic
+             </button>
+          </div>
         </div>
       </div>
 
@@ -292,6 +491,7 @@ const RoadmapView = () => {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeClick={handleNodeClick}
+              onNodeDragStop={onNodeDragStop}
               nodeTypes={nodeTypes}
               fitView
               fitViewOptions={{ padding: 0.2 }}
@@ -322,5 +522,11 @@ const RoadmapView = () => {
     </div>
   );
 };
+
+const RoadmapView = () => (
+  <ReactFlowProvider>
+    <RoadmapContent />
+  </ReactFlowProvider>
+);
 
 export default RoadmapView;
