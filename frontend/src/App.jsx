@@ -7,6 +7,8 @@ import RoadmapView from './pages/RoadmapView';
 import InterviewMode from './pages/InterviewMode';
 import Library from './pages/Library';
 import EducationNews from './pages/EducationNews';
+import InProgressCourses from './pages/InProgressCourses';
+import CompletedCourses from './pages/CompletedCourses';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -37,7 +39,22 @@ function App() {
                 <RoadmapView />
               </PrivateRoute>
             }
-            
+          />
+          <Route 
+            path="/courses/inprogress" 
+            element={
+              <PrivateRoute>
+                <InProgressCourses />
+              </PrivateRoute>
+            }
+          />
+          <Route 
+            path="/courses/completed" 
+            element={
+              <PrivateRoute>
+                <CompletedCourses />
+              </PrivateRoute>
+            }
           />
           <Route path="/interview" element={<InterviewMode />} />
           <Route path="/library" element={<Library />} />
@@ -49,6 +66,3 @@ function App() {
 }
 
 export default App;
-
-
-
