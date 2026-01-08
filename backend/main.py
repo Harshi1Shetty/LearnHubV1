@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import roadmap, content, auth, quiz
+from app.api.routes import roadmap, content, auth, quiz, coding, resources, tutor
 from app.db import init_db
 
 app = FastAPI(title="AI EdTech Backend", version="1.0.0")
@@ -27,6 +27,9 @@ app.include_router(roadmap.router, prefix="/api/roadmap", tags=["roadmap"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(quiz.router, prefix="/api/quiz", tags=["quiz"])
+app.include_router(coding.router, prefix="/api/coding", tags=["coding"])
+app.include_router(resources.router, prefix="/api/resources", tags=["resources"])
+app.include_router(tutor.router, prefix="/api/tutor", tags=["tutor"])
 
 @app.get("/")
 async def root():

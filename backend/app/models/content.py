@@ -7,6 +7,7 @@ class ContentRequest(BaseModel):
     mode: str = "story" # story, deep, exam
     difficulty: str = "Normal"
     language: str = "English"
+    interest: Optional[str] = None
     images: Optional[List[str]] = None
     videos: Optional[List[Union[str, dict]]] = None
 

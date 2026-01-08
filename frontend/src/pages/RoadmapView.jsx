@@ -16,8 +16,10 @@ import dagre from 'dagre';
 import { getRoadmap, updateRoadmap } from '../api/roadmap';
 import { generateContent } from '../api/content';
 import ContentPanel from '../components/ContentPanel';
-import { Brain, ArrowLeft, Loader2, BookOpen, Plus } from 'lucide-react';
+import TutorChat from '../components/TutorChat';
+import { Brain, ArrowLeft, Loader2, BookOpen, Plus, X } from 'lucide-react';
 import './RoadmapView.css';
+import './home.css'; // Import global styles for Modal
 
 const nodeWidth = 180;
 const nodeHeight = 70;
@@ -101,6 +103,11 @@ const RoadmapContent = () => {
   const [contentData, setContentData] = useState(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState('story');
+  
+  // Add Node Modal State
+  const [isAddNodeModalOpen, setIsAddNodeModalOpen] = useState(false);
+  const [newNodeLabel, setNewNodeLabel] = useState("");
+
   const contentCache = useRef({});
 
   useEffect(() => {
@@ -157,6 +164,7 @@ const RoadmapContent = () => {
   const fetchRoadmapData = async () => {
     try {
       const data = await getRoadmap(id);
+      console.log("Fetched Roadmap Data:", data); // Debug log
       setRoadmapData(data);
       const { nodes: processedNodes, edges: processedEdges, isSavedState } = processRoadmapData(data);
       
@@ -185,16 +193,20 @@ const RoadmapContent = () => {
     }
   };
 
-  const handleAddNode = useCallback(() => {
-    const label = window.prompt("Enter title for new subtopic:");
-    if (!label) return;
+  const handleOpenAddNodeModal = () => {
+      setNewNodeLabel("");
+      setIsAddNodeModalOpen(true);
+  };
 
+  const handleConfirmAddNode = (e) => {
+    e.preventDefault();
+    if (!newNodeLabel.trim()) return;
+
+    const label = newNodeLabel;
+    
     // Place in center of view approximately (using viewport center or fixed offset from first node)
     // A better way is to find a gap or just place at top left of view
     const { x, y, zoom } = getViewport();
-    // Center of screen relative to flow
-    // screen center is roughly (window.innerWidth / 2, window.innerHeight / 2)
-    // flowX = (screenX - x) / zoom
     
     // Simplification: Place it near the last selected node or at (100, 100) if none
     let spawnX = 100;
@@ -254,7 +266,14 @@ const RoadmapContent = () => {
 
     setEdges(newEdges);
     saveRoadmapState(newNodes, newEdges);
+    
+    // Close modal
+    setIsAddNodeModalOpen(false);
+  };
 
+  const handleAddNode = useCallback(() => {
+    // Legacy function kept for ref or if passed as prop, but we switch to modal
+    handleOpenAddNodeModal();
   }, [nodes, edges, getViewport, id]);
 
   const onNodeDragStop = useCallback(
@@ -377,7 +396,8 @@ const RoadmapContent = () => {
         roadmapData.language || 'English', 
         images, 
         videos,
-        id
+        id,
+        roadmapData.interest || null
       );
       setContentData(data);
       contentCache.current[cacheKey] = data;
@@ -411,7 +431,8 @@ const RoadmapContent = () => {
         roadmapData.language || 'English', 
         images, 
         videos,
-        id
+        id,
+        roadmapData.interest || null
       );
       setContentData(data);
       contentCache.current[cacheKey] = data;
@@ -516,9 +537,87 @@ const RoadmapContent = () => {
             difficulty={roadmapData?.difficulty}
             language={roadmapData?.language}
             roadmapId={id}
+            interest={roadmapData?.interest}
           />
+          {roadmapData?.topic && (
+              <TutorChat topic={roadmapData.topic} />
+          )}
         </div>
       </div>
+
+      {/* Add Node Modal */}
+      {isAddNodeModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsAddNodeModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2 className="modal-title">Add New Topic</h2>
+              <button 
+                className="modal-close"
+                onClick={() => setIsAddNodeModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleConfirmAddNode} style={{ padding: '20px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#1e293b' }}>
+                        Topic Name
+                    </label>
+                    <input 
+                        type="text" 
+                        autoFocus
+                        value={newNodeLabel}
+                        onChange={(e) => setNewNodeLabel(e.target.value)}
+                        placeholder="e.g. Advanced State Management"
+                        style={{ 
+                            width: '100%', 
+                            padding: '10px', 
+                            borderRadius: '6px', 
+                            border: '1px solid #cbd5e1',
+                            fontSize: '15px',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                     <button
+                        type="button"
+                        onClick={() => setIsAddNodeModalOpen(false)}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#f1f5f9',
+                            color: '#475569',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                        }}
+                     >
+                         Cancel
+                     </button>
+                     <button
+                        type="submit"
+                        disabled={!newNodeLabel.trim()}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#2563eb',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '500',
+                            opacity: newNodeLabel.trim() ? 1 : 0.6
+                        }}
+                     >
+                         Add Topic
+                     </button>
+                </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

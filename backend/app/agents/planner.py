@@ -43,15 +43,25 @@ planner_prompt = ChatPromptTemplate.from_messages([
     3. Use nested children for subtopics.
     4. Keep descriptions concise.
     5. IMPORTANT: Generate the roadmap labels and descriptions in {language} language.
+    
+    User Context:
+    Interest/Hobby: {interest} (Optional: Use metaphors if relevant, but keep labels technical)
+    Objective: {objective} (Optional: Tailor the structure. e.g. "Exam based" = Syllabus style, "Skill based" = Practical steps)
     """),
-    ("user", "Topic: {topic}\nDifficulty: {difficulty}\nLanguage: {language}")
+    ("user", "Topic: {topic}\nDifficulty: {difficulty}\nLanguage: {language}\nInterest: {interest}\nObjective: {objective}")
 ])
 
 chain = planner_prompt | llm | JsonOutputParser()
 
-async def generate_roadmap(topic: str, difficulty: str, language: str = "English") -> RoadmapResponse:
+async def generate_roadmap(topic: str, difficulty: str, language: str = "English", interest: str = None, objective: str = None) -> RoadmapResponse:
     try:
-        response = await chain.ainvoke({"topic": topic, "difficulty": difficulty, "language": language})
+        response = await chain.ainvoke({
+            "topic": topic, 
+            "difficulty": difficulty, 
+            "language": language,
+            "interest": interest or "General",
+            "objective": objective or "General Learning"
+        })
         # Validate with Pydantic to ensure structure
         return RoadmapResponse(**response)
     except Exception as e:

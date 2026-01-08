@@ -15,7 +15,11 @@ import {
 import QuizModal from './QuizModal';
 import './ContentPanel.css';
 
-const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMode, difficulty, language, roadmapId }) => {
+const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMode, difficulty, language, roadmapId, interest }) => {
+  useEffect(() => {
+    console.log("ContentPanel received interest:", interest);
+  }, [interest]);
+
   const [showQuiz, setShowQuiz] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [enlargedImg, setEnlargedImg] = useState(null); // State for light-box
@@ -90,7 +94,7 @@ const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMod
 
       <div className="mode-selector">
         <button onClick={() => onModeChange('story')} className={`mode-button ${currentMode === 'story' ? 'mode-button-active mode-button-story' : 'mode-button-inactive'}`}>
-          <BookOpen size={16} /> <span>Story Mode</span>
+          <BookOpen size={16} /> <span>{interest ? 'Interest Mode' : 'Story Mode'}</span>
         </button>
         <button onClick={() => onModeChange('deep')} className={`mode-button ${currentMode === 'deep' ? 'mode-button-active mode-button-deep' : 'mode-button-inactive'}`}>
           <Brain size={16} /> <span>Deep Dive</span>

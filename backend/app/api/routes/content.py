@@ -53,7 +53,8 @@ async def create_content(request: DBContentRequest):
             request.language,
             request.images,
             request.videos,
-            user_status=user_status
+            user_status=user_status,
+            interest=request.interest
         )
         
         # Save to DB

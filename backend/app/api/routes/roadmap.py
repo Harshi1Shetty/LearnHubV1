@@ -27,7 +27,8 @@ async def get_user_roadmaps(user_id: int):
 async def get_roadmap(roadmap_id: int):
     with get_db() as conn:
         c = conn.cursor()
-        c.execute("SELECT roadmap_json, difficulty, language, user_id, topic FROM roadmaps WHERE id = ?", (roadmap_id,))
+        # Retrieve 'interest' and 'objective'
+        c.execute("SELECT roadmap_json, difficulty, language, user_id, topic, interest, objective FROM roadmaps WHERE id = ?", (roadmap_id,))
         row = c.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Roadmap not found")
@@ -38,7 +39,14 @@ async def get_roadmap(roadmap_id: int):
             data["difficulty"] = row["difficulty"]
         if "language" not in data:
             data["language"] = row["language"]
-            
+        if "interest" not in data or data["interest"] is None:
+             data["interest"] = row["interest"]
+        if "objective" not in data or data["objective"] is None:
+             try:
+                 data["objective"] = row["objective"]
+             except Exception:
+                 data["objective"] = None # Handle if column logic fails somehow
+
         # Fetch user progress
         c.execute("SELECT subtopic, mastery_score, status FROM user_knowledge WHERE user_id = ? AND topic = ?", (row["user_id"], row["topic"]))
         progress_rows = c.fetchall()
@@ -92,15 +100,15 @@ class CreateRoadmapRequest(RoadmapRequest):
 async def create_roadmap(request: CreateRoadmapRequest):
     try:
         # Generate roadmap using LLM
-        roadmap_data = await generate_roadmap(request.topic, request.difficulty, request.language)
+        roadmap_data = await generate_roadmap(request.topic, request.difficulty, request.language, request.interest, request.objective)
         
         # Save to DB
         with get_db() as conn:
             c = conn.cursor()
             c.execute("""
-                INSERT INTO roadmaps (user_id, topic, language, difficulty, roadmap_json)
-                VALUES (?, ?, ?, ?, ?)
-            """, (request.user_id, request.topic, request.language, request.difficulty, roadmap_data.json()))
+                INSERT INTO roadmaps (user_id, topic, language, difficulty, interest, objective, roadmap_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (request.user_id, request.topic, request.language, request.difficulty, request.interest, request.objective, roadmap_data.json()))
             conn.commit()
             roadmap_id = c.lastrowid
             

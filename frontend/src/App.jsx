@@ -9,6 +9,8 @@ import Library from './pages/Library';
 import EducationNews from './pages/EducationNews';
 import InProgressCourses from './pages/InProgressCourses';
 import CompletedCourses from './pages/CompletedCourses';
+import CodingTutor from './pages/CodingTutor';
+import CodingSessions from './pages/CodingSessions';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -59,6 +61,22 @@ function App() {
           <Route path="/interview" element={<InterviewMode />} />
           <Route path="/library" element={<Library />} />
           <Route path="/news" element={<EducationNews />} />
+          <Route 
+            path="/coding-tutor" 
+            element={
+              <PrivateRoute>
+                <CodingSessions />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/coding-session/:id" 
+            element={
+              <PrivateRoute>
+                <CodingTutor />
+              </PrivateRoute>
+            } 
+          />
         </Routes>
       </Router>
     </AuthProvider>

@@ -22,14 +22,27 @@ def init_db():
         CREATE TABLE IF NOT EXISTS roadmaps (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            topic TEXT NOT NULL,
+            topics TEXT NOT NULL,
             language TEXT NOT NULL,
             difficulty TEXT NOT NULL,
+            interest TEXT,
+            objective TEXT,
             roadmap_json TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
+
+    # Migration for existing databases
+    try:
+        c.execute("ALTER TABLE roadmaps ADD COLUMN interest TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE roadmaps ADD COLUMN objective TEXT")
+    except sqlite3.OperationalError:
+        pass
 
     # Node Content Table (Cache)
     c.execute('''
@@ -81,6 +94,70 @@ def init_db():
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id),
             UNIQUE(user_id, topic, subtopic)
+        )
+    ''')
+
+    # Coding Sessions
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS coding_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            language TEXT NOT NULL,
+            title TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Coding Messages
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS coding_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (session_id) REFERENCES coding_sessions (id)
+        )
+    ''')
+
+    # Resources Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS resources (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            title TEXT NOT NULL,
+            description TEXT,
+            type TEXT NOT NULL, 
+            category TEXT,
+            file_path TEXT,
+            filename TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Tutor Sessions
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tutor_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            topic TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            UNIQUE(user_id, topic)
+        )
+    ''')
+
+    # Tutor Messages
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tutor_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (session_id) REFERENCES tutor_sessions (id)
         )
     ''')
     

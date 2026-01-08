@@ -5,6 +5,8 @@ class RoadmapRequest(BaseModel):
     topic: str
     difficulty: str = "Normal"
     language: str = "English"
+    interest: Optional[str] = None
+    objective: Optional[str] = None
 
 class RoadmapNode(BaseModel):
     id: str
@@ -18,6 +20,8 @@ class RoadmapResponse(BaseModel):
     topic: str
     difficulty: str = "Normal"
     language: str = "English"
+    interest: Optional[str] = None
+    objective: Optional[str] = None
     roadmap: List[RoadmapNode]
     nodes: Optional[List[dict]] = None
     edges: Optional[List[dict]] = None

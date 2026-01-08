@@ -36,7 +36,7 @@ def search_serper(query: str, type: str = "search"):
         print(f"Serper API Error: {e}")
         return {}
 
-async def generate_content(topic: str, subtopic: str, mode: str, difficulty: str, language: str = "English", existing_images: list = None, existing_videos: list = None, user_status: str = "novice") -> ContentResponse:
+async def generate_content(topic: str, subtopic: str, mode: str, difficulty: str, language: str = "English", existing_images: list = None, existing_videos: list = None, user_status: str = "novice", interest: str = None, objective: str = None) -> ContentResponse:
     # 1. Fetch Media
     images = existing_images if existing_images else []
     videos = existing_videos if existing_videos else []
@@ -72,7 +72,10 @@ async def generate_content(topic: str, subtopic: str, mode: str, difficulty: str
         adaptive_instruction = "The user is a NOVICE. Explain from first principles. Use simple language and many examples. Build a strong foundation."
 
     if mode == "story":
-        system_prompt = "You are a creative writer. Explain the concept using analogies, characters, and a narrative structure. Make it engaging and easy to visualize."
+        if interest:
+            system_prompt = f"You are a creative writer who explains complex topics by relating them to '{interest}'. Use analogies, characters, metaphors, and terminology strictly from the world of {interest} to explain the concept. Make it fun, engaging, and highly personalized to a fan of {interest}."
+        else:
+            system_prompt = "You are a creative writer. Explain the concept using analogies, characters, and a narrative structure. Make it engaging and easy to visualize."
     elif mode == "deep":
         system_prompt = "You are a research scientist. Provide a rigorous technical explanation, including mathematical definitions, edge cases, and deep theoretical context."
     elif mode == "exam":
@@ -80,8 +83,20 @@ async def generate_content(topic: str, subtopic: str, mode: str, difficulty: str
     else:
         system_prompt = "You are a helpful tutor. Explain the concept clearly."
 
+    # Objective Logic
+    objective_instruction = ""
+    if objective:
+        if objective == "Exam based":
+            objective_instruction = "The user has an UPCOMING EXAM. Focus strictly on syllabus coverage, key definitions, memorizable facts, and common exam questions. Be precise and high-yield."
+        elif objective == "Conceptual":
+            objective_instruction = "The user wants DEEP CONCEPTUAL UNDERSTANDING. Focus on the 'why' and 'how'. Connect ideas together. Specific facts are less important than intuition and mental models."
+        elif objective == "Skill based":
+            objective_instruction = "The user wants PRACTICAL SKILLS. Focus exclusively on implementation, how-to guides, real-world steps, and execution. Minimize theory."
+        else: # Custom or specific text
+            objective_instruction = f"The user has a specific goal: '{objective}'. Tailor all explanations to help achieve this specific goal."
+
     prompt = ChatPromptTemplate.from_messages([
-        ("system", f"{system_prompt}\n\nTarget Audience Difficulty: {difficulty}.\nUser Proficiency Level: {user_status.upper()}\n{adaptive_instruction}\n\nIMPORTANT INSTRUCTION: You must generate the entire response in the {language} language. Do not use English unless the term has no translation."),
+        ("system", f"{system_prompt}\n\nTarget Audience Difficulty: {difficulty}.\nUser Proficiency Level: {user_status.upper()}\n{adaptive_instruction}\n\nUser Objective: {objective_instruction}\n\nIMPORTANT INSTRUCTION: You must generate the entire response in the {language} language. Do not use English unless the term has no translation."),
         ("user", f"Explain the subtopic '{subtopic}' which is part of '{topic}'. Write the explanation in {language}.")
     ])
 

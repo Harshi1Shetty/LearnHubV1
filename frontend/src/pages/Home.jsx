@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserRoadmaps, generateRoadmap } from '../api/roadmap';
-import { Plus, Map, LogOut, Loader2, X, Brain, BookOpen, Clock, TrendingUp, Mic, Library, Newspaper } from 'lucide-react';
+import { Plus, Map, LogOut, Loader2, X, Brain, BookOpen, Clock, TrendingUp, Mic, Library, Newspaper, Code } from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
@@ -13,6 +13,9 @@ const Home = () => {
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState('Normal');
   const [language, setLanguage] = useState('English');
+  const [interest, setInterest] = useState('');
+  const [objective, setObjective] = useState('Exam based');
+  const [customObjective, setCustomObjective] = useState('');
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -33,8 +36,12 @@ const Home = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     setGenerating(true);
+    let finalObjective = objective;
+    if (objective === "Custom") {
+        finalObjective = customObjective;
+    }
     try {
-      const data = await generateRoadmap(topic, difficulty, language, user.id);
+      const data = await generateRoadmap(topic, difficulty, language, interest, finalObjective, user.id);
       window.location.href = `/roadmap/${data.id}`;
     } catch (error) {
       console.error("Failed to create roadmap", error);
@@ -249,6 +256,22 @@ const Home = () => {
             </div>
 
             <div 
+              onClick={() => window.location.href = '/coding-tutor'}
+              className="roadmap-card"
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="roadmap-header">
+                <div className="roadmap-icon">
+                  <Code size={20} />
+                </div>
+              </div>
+              <h3 className="roadmap-title">Coding Tutor</h3>
+              <p className="section-subtitle" style={{ marginTop: '8px', fontSize: '14px' }}>
+                Interactive coding practice with AI assistance
+              </p>
+            </div>
+
+            <div 
               onClick={() => window.location.href = '/library'}
               className="roadmap-card"
               style={{ cursor: 'pointer' }}
@@ -341,6 +364,48 @@ const Home = () => {
                     <option value="Normal">Normal</option>
                     <option value="Difficult">Difficult</option>
                   </select>
+                </div>
+
+                <div className="form-field">
+                  <label className="field-label">Objective</label>
+                  <select
+                    value={objective}
+                    onChange={(e) => setObjective(e.target.value)}
+                    className="field-select"
+                  >
+                    <option value="Exam based">Exam based</option>
+                    <option value="Conceptual">Conceptual</option>
+                    <option value="Skill based">Skill based</option>
+                    <option value="Custom">Custom</option>
+                  </select>
+                </div>
+
+                {objective === 'Custom' && (
+                  <div className="form-field" style={{ gridColumn: '1 / -1' }}>
+                    <label className="field-label">Custom Goal</label>
+                    <input
+                      type="text"
+                      value={customObjective}
+                      onChange={(e) => setCustomObjective(e.target.value)}
+                      maxLength={100}
+                      placeholder="Enter your specific goal (max 100 chars)"
+                      className="field-input"
+                    />
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px', textAlign: 'right' }}>
+                      {customObjective.length}/100
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-field">
+                  <label className="field-label">Interest (Optional)</label>
+                  <input
+                    type="text"
+                    value={interest}
+                    onChange={(e) => setInterest(e.target.value)}
+                    placeholder="e.g. Anime, Football"
+                    className="field-input"
+                  />
                 </div>
               </div>
 
