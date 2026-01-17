@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserRoadmaps, generateRoadmap } from '../api/roadmap';
-import { Plus, Map, LogOut, Loader2, X, Brain, BookOpen, Clock, TrendingUp, Mic, Library, Newspaper, Code } from 'lucide-react';
-import './Home.css';
+import { Plus, Map, LogOut, Loader2, X, Brain, BookOpen, Clock, TrendingUp, Mic, Library, Newspaper, Code, FileText, MonitorPlay } from 'lucide-react';
+
+const getTopicColor = (topic) => {
+    const colors = [
+      'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', // Red
+      'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', // Orange
+      'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Amber
+      'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)', // Lime
+      'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Emerald
+      'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', // Cyan
+      'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', // Blue
+      'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', // Indigo
+      'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', // Violet
+      'linear-gradient(135deg, #d946ef 0%, #c026d3 100%)', // Fuchsia
+      'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose
+    ];
+    let hash = 0;
+    for (let i = 0; i < topic.length; i++) {
+      hash = topic.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
 
 const Home = () => {
   const { user, logout } = useAuth();
@@ -54,7 +74,7 @@ const Home = () => {
   };
 
   const calculateProgress = (roadmap) => {
-    return Math.floor(Math.random() * 100);
+    return roadmap.progress || 0;
   };
 
   const countInProgress = () => {
@@ -73,7 +93,7 @@ const Home = () => {
             <div className="logo-icon">
               <Brain className="icon" />
             </div>
-            <h1 className="logo-title">LearnHub</h1>
+            <h1 className="logo-title">Learnhub.SAKEC</h1>
           </div>
           <div className="header-actions">
             <span className="welcome-text">Welcome, {user.username}</span>
@@ -168,6 +188,9 @@ const Home = () => {
             <div className="roadmaps-grid">
               {roadmaps.map((roadmap) => {
                 const progress = calculateProgress(roadmap);
+                const topicColor = getTopicColor(roadmap.topic);
+                const firstLetter = roadmap.topic ? roadmap.topic.charAt(0).toUpperCase() : '?';
+
                 return (
                   <div 
                     key={roadmap.id}
@@ -175,8 +198,8 @@ const Home = () => {
                     className="roadmap-card"
                   >
                     <div className="roadmap-header">
-                      <div className="roadmap-icon">
-                        <BookOpen size={20} />
+                      <div className="roadmap-icon" style={{ background: topicColor, color: 'white' }}>
+                         <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{firstLetter}</span>
                       </div>
                       <span className="roadmap-language">{roadmap.language}</span>
                     </div>
@@ -272,6 +295,38 @@ const Home = () => {
             </div>
 
             <div 
+              onClick={() => setShowModal(true)}
+              className="roadmap-card"
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="roadmap-header">
+                <div className="roadmap-icon">
+                  <FileText size={20} />
+                </div>
+              </div>
+              <h3 className="roadmap-title">Learn Your Material</h3>
+              <p className="section-subtitle" style={{ marginTop: '8px', fontSize: '14px' }}>
+                Upload PDFs and let AI teach you your own content
+              </p>
+            </div>
+
+            <div 
+              onClick={() => window.location.href = '/simulation-hub'}
+              className="roadmap-card"
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="roadmap-header">
+                <div className="roadmap-icon">
+                  <MonitorPlay size={20} />
+                </div>
+              </div>
+              <h3 className="roadmap-title">Simulation Hub</h3>
+              <p className="section-subtitle" style={{ marginTop: '8px', fontSize: '14px' }}>
+                Interactive Simulations for deeply understanding concepts
+              </p>
+            </div>
+
+            <div 
               onClick={() => window.location.href = '/library'}
               className="roadmap-card"
               style={{ cursor: 'pointer' }}
@@ -323,6 +378,20 @@ const Home = () => {
             </div>
 
             <div className="modal-form">
+                <div className="modal-tabs" style={{display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #e5e7eb'}}>
+                    <button 
+                        onClick={() => setGenerating(false)} // Just using a state to toggle logic, ideally create a separate tab state
+                        style={{padding: '0.5rem 1rem', borderBottom: '2px solid #2563eb', fontWeight: '600', color: '#2563eb'}}
+                    >
+                        Generate Topics
+                    </button>
+                    <button 
+                        onClick={() => window.location.href = '/materials'}
+                        style={{padding: '0.5rem 1rem', color: '#6b7280', cursor: 'pointer'}}
+                    >
+                        Upload Materials
+                    </button>
+                </div>
               <div className="form-field">
                 <label className="field-label">
                   Topic

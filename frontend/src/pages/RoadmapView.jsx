@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactFlow, {
   Controls,
@@ -88,9 +88,8 @@ const CustomNode = ({ data, selected }) => {
   );
 };
 
-const nodeTypes = { custom: CustomNode };
-
 const RoadmapContent = () => {
+  const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
   const { id } = useParams();
   const navigate = useNavigate();
   const [roadmapData, setRoadmapData] = useState(null);
@@ -468,7 +467,7 @@ const RoadmapContent = () => {
             <div className="logo-icon">
               <Brain size={20} />
             </div>
-            <span className="logo-text">LearnHub</span>
+            <span className="logo-text">Learnhub.SAKEC</span>
           </div>
           <div className="header-divider"></div>
           <div className="roadmap-info">

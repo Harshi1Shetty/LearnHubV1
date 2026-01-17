@@ -22,7 +22,7 @@ class RoadmapResponse(BaseModel):
     language: str = "English"
     interest: Optional[str] = None
     objective: Optional[str] = None
-    roadmap: List[RoadmapNode]
+    roadmap: Optional[List[RoadmapNode]] = None
     nodes: Optional[List[dict]] = None
     edges: Optional[List[dict]] = None
 

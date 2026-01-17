@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GraduationCap, Send, X, MessageSquare, Loader2, Minimize2 } from 'lucide-react';
+import { GraduationCap, Send, X, MessageSquare, Loader2, Minimize2, Mic, MicOff } from 'lucide-react';
 import { tutorApi } from '../api/tutor';
 import { useAuth } from '../context/AuthContext';
 import ReactMarkdown from 'react-markdown';
@@ -13,6 +13,77 @@ const TutorChat = ({ topic }) => {
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const [hasUnread, setHasUnread] = useState(false);
+
+    // Voice State
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef(null);
+    const [voiceError, setVoiceError] = useState(null);
+
+    useEffect(() => {
+        if (voiceError) {
+            const timer = setTimeout(() => setVoiceError(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [voiceError]);
+
+    useEffect(() => {
+        // Initialize Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setInputValue(prev => (prev ? prev + ' ' + transcript : transcript));
+                setIsListening(false);
+                setVoiceError(null);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                setIsListening(false);
+                if (event.error === 'network') {
+                    setVoiceError("Offline/Network error. Helper requires internet.");
+                } else if (event.error === 'not-allowed') {
+                    setVoiceError("Microphone blocked. Check permissions.");
+                } else if (event.error === 'no-speech') {
+                    // Ignore no-speech, just stop listening
+                    setVoiceError(null); 
+                } else {
+                    setVoiceError(`Voice error: ${event.error}`);
+                }
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            recognitionRef.current = recognition;
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.abort();
+            }
+        };
+    }, []);
+
+    const toggleListening = () => {
+        if (!recognitionRef.current) {
+            alert("Your browser does not support speech recognition.");
+            return;
+        }
+
+        if (isListening) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    };
 
     useEffect(() => {
         if (isOpen && user && topic) {
@@ -129,11 +200,19 @@ const TutorChat = ({ topic }) => {
                     </div>
 
                     <form onSubmit={handleSend} className="tutor-input-area">
+                        <button 
+                            type="button"
+                            onClick={toggleListening}
+                            className={`tutor-mic-btn ${isListening ? 'listening' : ''} ${voiceError ? 'error' : ''}`}
+                            title={voiceError || (isListening ? "Stop Listening" : "Speak")}
+                        >
+                            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                        </button>
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={`Ask about ${topic}...`}
+                            placeholder={isListening ? "Listening..." : `Ask about ${topic}...`}
                             className="tutor-input"
                             autoFocus
                         />

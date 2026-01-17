@@ -11,3 +11,6 @@ python-dotenv
 pydantic
 faiss-cpu
 sentence-transformers
+pypdf
+langchain-huggingface
+groq

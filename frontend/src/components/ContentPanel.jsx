@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import QuizModal from './QuizModal';
 import './ContentPanel.css';
+import AvatarCanvas from './Avatar';
+
 
 const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMode, difficulty, language, roadmapId, interest }) => {
   useEffect(() => {
@@ -71,6 +73,8 @@ const ContentPanel = ({ data, topic, subtopic, onModeChange, loading, currentMod
           <img src={enlargedImg} alt="Enlarged view" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
+
+         
 
       <div className="content-panel-header">
         <div className="flex justify-between items-start w-full">

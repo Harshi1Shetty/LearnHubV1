@@ -11,6 +11,10 @@ import InProgressCourses from './pages/InProgressCourses';
 import CompletedCourses from './pages/CompletedCourses';
 import CodingTutor from './pages/CodingTutor';
 import CodingSessions from './pages/CodingSessions';
+import MaterialSessions from './pages/MaterialSessions';
+import SimulationHub from './pages/SimulationHub';
+import SimulationView from './pages/SimulationView';
+import MaterialRoadmap from './pages/MaterialRoadmap';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -60,6 +64,8 @@ function App() {
           />
           <Route path="/interview" element={<InterviewMode />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/simulation-hub" element={<PrivateRoute><SimulationHub /></PrivateRoute>} />
+          <Route path="/simulation/:id" element={<PrivateRoute><SimulationView /></PrivateRoute>} />
           <Route path="/news" element={<EducationNews />} />
           <Route 
             path="/coding-tutor" 
@@ -74,6 +80,22 @@ function App() {
             element={
               <PrivateRoute>
                 <CodingTutor />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/materials" 
+            element={
+              <PrivateRoute>
+                <MaterialSessions />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/material/:id" 
+            element={
+              <PrivateRoute>
+                <MaterialRoadmap />
               </PrivateRoute>
             } 
           />

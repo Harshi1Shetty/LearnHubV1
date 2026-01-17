@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Simulation: Linked List Implementation</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --node-color: #8e44ad; /* Purple for Linked List nodes */
+            --pointer-color: #e67e22; /* Orange for pointers */
+            --bg-color: #f4f7f6;
+            --text-color: white;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #7f8c8d; margin-bottom: 20px; }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        input, button {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            outline: none;
+        }
+
+        button {
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        button#pushBtn { background-color: #27ae60; }
+        button#popBtn { background-color: #c0392b; }
+        button#peekBtn { background-color: #2980b9; }
+
+        .status-box {
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid var(--primary-color);
+            color: #555;
+            font-size: 14px;
+            min-height: 40px;
+        }
+
+        /* Top Pointer Display */
+        .top-display {
+            background: var(--pointer-color);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-family: monospace;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Visualization Area */
+        .visualizer-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0; /* Gap handled by arrow spacing */
+            width: 100%;
+            overflow-y: auto;
+            max-height: 500px;
+            padding-top: 20px;
+        }
+
+        /* Individual Node Styling */
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .node {
+            display: flex;
+            background: var(--node-color);
+            color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .node-data, .node-next {
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node-data {
+            border-right: 2px solid rgba(255,255,255,0.2);
+            font-weight: bold;
+            font-size: 18px;
+            min-width: 60px;
+        }
+
+        .node-next {
+            background: rgba(0,0,0,0.1);
+            font-family: monospace;
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .field-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .address-tag {
+            background: #34495e;
+            color: #bdc3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-bottom: 4px;
+            font-family: monospace;
+        }
+
+        /* Arrow Connector */
+        .arrow-down {
+            width: 2px;
+            height: 40px;
+            background: #bdc3c7;
+            position: relative;
+            margin: 0;
+            z-index: 1;
+        }
+
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -4px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 8px solid #bdc3c7;
+        }
+
+        .null-indicator {
+            margin-top: 5px;
+            font-weight: bold;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .peek-anim .node {
+            animation: highlight 0.5s ease;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Stack Visualization</h1>
+    <p>Linked List Implementation (Dynamic Memory)</p>
+    
+
+    <div class="container">
+        <div class="controls">
+            <input type="text" id="stackInput" placeholder="Enter value..." onkeypress="handleEnter(event)">
+            <button id="pushBtn" onclick="push()">Push Node</button>
+            <button id="popBtn" onclick="pop()">Pop Node</button>
+            <button id="peekBtn" onclick="peek()">Peek Top</button>
+            
+            <div class="status-box" id="statusBox">
+                Status: Stack is empty.
+            </div>
+
+            <div class="top-display" id="topPointerDisplay">
+                TOP POINTER: NULL
+            </div>
+        </div>
+
+        <div class="visualizer-container">
+            <div class="node-list" id="nodeList">
+                <div class="null-indicator">NULL</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure to hold state
+        let stack = []; 
+        // We use an array to track simulation state, but the visual logic mimics a Linked List
+        // stack[0] is the TOP node.
+
+        const nodeList = document.getElementById('nodeList');
+        const inputField = document.getElementById('stackInput');
+        const statusBox = document.getElementById('statusBox');
+        const topDisplay = document.getElementById('topPointerDisplay');
+
+        function handleEnter(event) {
+            if (event.key === "Enter") push();
+        }
+
+        // Generate fake hex address
+        function generateAddress() {
+            return '0x' + Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function push() {
+            const val = inputField.value;
+            if (val === "") {
+                setStatus("⚠️ Enter a value first!", true);
+                return;
+            }
+
+            // Create new node object
+            const newNode = {
+                value: val,
+                address: generateAddress(),
+                nextAddress: stack.length > 0 ? stack[0].address : "NULL"
+            };
+
+            // Add to simulation state (Unshift = Add to beginning/Top)
+            stack.unshift(newNode);
+            
+            updateVisuals(true); // true = indicate push animation
+            setStatus(`✅ Created node at <strong>${newNode.address}</strong>. Top updated.`);
+            inputField.value = "";
+            inputField.focus();
+        }
+
+        function pop() {
+            if (stack.length === 0) {
+                setStatus("⛔ Stack Underflow! List is empty.", true);
+                return;
+            }
+
+            const removedNode = stack.shift();
+            updateVisuals();
+            setStatus(`🗑️ Removed node at <strong>${removedNode.address}</strong>. Top updated.`);
+        }
+
+        function peek() {
+            if (stack.length === 0) {
+                setStatus("⚠️ Stack is empty.", true);
+                return;
+            }
+            
+            // Highlight the first element in the DOM
+            const topNode = nodeList.firstElementChild;
+            if(topNode && topNode.classList.contains('node-wrapper')) {
+                topNode.classList.add('peek-anim');
+                setTimeout(() => topNode.classList.remove('peek-anim'), 500);
+            }
+
+            setStatus(`👀 Top Data: <strong>${stack[0].value}</strong> | Next Ptr: ${stack[0].nextAddress}`);
+        }
+
+        function setStatus(msg, isError = false) {
+            statusBox.innerHTML = msg;
+            statusBox.style.borderLeftColor = isError ? "#e74c3c" : "#2ecc71";
+        }
+
+        function updateVisuals(isPush = false) {
+            // Update Top Pointer Display
+            if (stack.length === 0) {
+                topDisplay.innerHTML = "TOP POINTER: NULL";
+                topDisplay.style.background = "#e67e22";
+            } else {
+                topDisplay.innerHTML = `TOP POINTER: ${stack[0].address}`;
+                topDisplay.style.background = "#27ae60";
+            }
+
+            // Re-render list
+            nodeList.innerHTML = '';
+
+            stack.forEach((node, index) => {
+                // Wrapper for animation and layout
+                const wrapper = document.createElement('div');
+                wrapper.className = 'node-wrapper';
+
+                // Node Box
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node';
+                
+                // Address Tag (Floating above or part of layout)
+                const addressTag = `<div class="address-tag">addr: ${node.address}</div>`;
+
+                // HTML structure for the node
+                nodeDiv.innerHTML = `
+                    <div class="node-data">
+                        <span class="field-label">Data</span>
+                        ${node.value}
+                    </div>
+                    <div class="node-next">
+                        <span class="field-label">Next Ptr</span>
+                        ${node.nextAddress}
+                    </div>
+                `;
+
+                // Add address tag visually
+                wrapper.innerHTML = addressTag;
+                wrapper.appendChild(nodeDiv);
+
+                // Add Arrow if there is a next node, or NULL indicator if it's the last one
+                if (index < stack.length) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow-down';
+                    wrapper.appendChild(arrow);
+                }
+
+                nodeList.appendChild(wrapper);
+            });
+
+            // Append final NULL indicator
+            const nullDiv = document.createElement('div');
+            nullDiv.className = 'null-indicator';
+            nullDiv.innerText = "NULL";
+            nodeList.appendChild(nullDiv);
+        }
+
+    </script>
+</body>
+</html>

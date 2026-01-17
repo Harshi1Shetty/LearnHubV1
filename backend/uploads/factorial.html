@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factorial Recursion Visualizer</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --stack-color: #8e44ad; /* Purple for Frames */
+            --highlight-color: #f1c40f; /* Yellow for Active */
+            --return-color: #27ae60;    /* Green for Return Values */
+            --bg-color: #f4f7f6;
+            --code-bg: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #7f8c8d; margin-bottom: 20px; }
+
+        /* Main Layout */
+        .container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Left Column: Visualization */
+        .vis-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 400px;
+        }
+
+        .stack-container {
+            width: 100%;
+            min-height: 400px;
+            border-bottom: 4px solid var(--primary-color);
+            border-left: 2px dashed #bdc3c7;
+            border-right: 2px dashed #bdc3c7;
+            background: rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column-reverse; /* Stack grows UP */
+            padding: 10px;
+            gap: 5px;
+            position: relative;
+        }
+
+        .stack-label {
+            position: absolute;
+            bottom: -30px;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        /* Stack Frames */
+        .frame {
+            background: white;
+            border: 2px solid var(--stack-color);
+            border-radius: 8px;
+            padding: 10px;
+            width: 90%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.4s ease-out;
+            position: relative;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .frame.returning {
+            border-color: var(--return-color);
+            background-color: #e8f8f5;
+            animation: pulse 1s infinite;
+        }
+
+        .frame-header {
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .frame-vars {
+            color: #555;
+        }
+
+        .return-val {
+            color: var(--return-color);
+            font-weight: bold;
+            display: none;
+        }
+
+        /* Right Column: Code & Controls */
+        .control-section {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            width: 60px;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            flex-grow: 1;
+            padding: 10px;
+            background: var(--stack-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            color: #dfe6e9;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .line {
+            display: block;
+            padding: 0 5px;
+            border-radius: 3px;
+        }
+        .line.active {
+            background-color: #d63031;
+            color: white;
+        }
+
+        .status {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Factorial Visualizer</h1>
+    <p>Recursive Implementation (Call Stack Visualization)</p>
+
+    <div class="container">
+        <div class="vis-section">
+            <div class="stack-container" id="stackContainer">
+                <div class="stack-label">System Call Stack (LIFO)</div>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="input-box">
+                <input type="number" id="numInput" value="5" min="1" max="7">
+                <button id="runBtn" onclick="startSimulation()">Calculate Factorial</button>
+            </div>
+
+            <div class="code-block" id="codeBlock">
+<span class="line" id="line1">int factorial(n) {</span>
+<span class="line" id="line2">    // Base Case</span>
+<span class="line" id="line3">    if (n <= 1) return 1;</span>
+<span class="line" id="line4">    </span>
+<span class="line" id="line5">    // Recursive Step</span>
+<span class="line" id="line6">    int result = n * factorial(n - 1);</span>
+<span class="line" id="line7">    return result;</span>
+<span class="line" id="line8">}</span>
+            </div>
+
+            <div class="status" id="statusBox">
+                Ready to calculate. Limit: 7 (to save screen space).
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants & DOM
+        const stackContainer = document.getElementById('stackContainer');
+        const statusBox = document.getElementById('statusBox');
+        const runBtn = document.getElementById('runBtn');
+        let delay = 1200; // Animation speed in ms
+
+        // State
+        let isRunning = false;
+
+        async function startSimulation() {
+            if (isRunning) return;
+            
+            const n = parseInt(document.getElementById('numInput').value);
+            if (n < 1 || n > 10) {
+                statusBox.innerHTML = "⚠️ Please enter a number between 1 and 10.";
+                return;
+            }
+
+            // Reset
+            isRunning = true;
+            runBtn.disabled = true;
+            stackContainer.innerHTML = '<div class="stack-label">System Call Stack (LIFO)</div>';
+            statusBox.innerHTML = "Starting process...";
+
+            // Start Recursion
+            await recursiveFactorial(n);
+
+            // Finish
+            isRunning = false;
+            runBtn.disabled = false;
+            statusBox.innerHTML = `✅ Calculation Complete! Result: <strong>${factorialMath(n)}</strong>`;
+            highlightLine(null);
+        }
+
+        // Helper for final math check
+        function factorialMath(n) { return n <= 1 ? 1 : n * factorialMath(n - 1); }
+
+        async function recursiveFactorial(n) {
+            // 1. Create Stack Frame (Push)
+            const frameId = `frame-${n}`;
+            createFrame(n, frameId);
+            highlightLine('line1');
+            statusBox.innerHTML = `Called factorial(${n}). Pushing stack frame.`;
+            await sleep(delay);
+
+            // 2. Check Base Case
+            highlightLine('line3');
+            if (n <= 1) {
+                statusBox.innerHTML = `Base case reached (n=1). Returning 1.`;
+                updateFrameReturn(frameId, 1);
+                await sleep(delay);
+                
+                // Return sequence start
+                removeFrame(frameId);
+                return 1;
+            }
+
+            // 3. Recursive Call
+            statusBox.innerHTML = `n (${n}) > 1. Pausing to calculate factorial(${n-1})...`;
+            highlightLine('line6');
+            await sleep(delay);
+
+            // --- RECURSE ---
+            let subResult = await recursiveFactorial(n - 1);
+            // ---------------
+
+            // 4. Resume (Unwinding)
+            // Re-highlight this frame (it was buried)
+            const myFrame = document.getElementById(frameId);
+            if(myFrame) myFrame.classList.add('returning');
+            
+            let myResult = n * subResult;
+            
+            highlightLine('line6'); // Back at calculation line
+            statusBox.innerHTML = `Resuming factorial(${n}). Received ${subResult}. <br> Calculation: ${n} * ${subResult} = <strong>${myResult}</strong>`;
+            
+            updateFrameReturn(frameId, myResult); // Show calculation visually
+            await sleep(delay);
+
+            // 5. Return
+            highlightLine('line7');
+            statusBox.innerHTML = `Returning ${myResult} to previous caller.`;
+            await sleep(delay);
+            
+            removeFrame(frameId);
+            return myResult;
+        }
+
+        // --- Visual Helpers ---
+
+        function createFrame(n, id) {
+            const frame = document.createElement('div');
+            frame.className = 'frame';
+            frame.id = id;
+            frame.innerHTML = `
+                <div class="frame-header">factorial(${n})</div>
+                <div class="frame-vars">n = ${n}</div>
+                <div class="return-val" id="${id}-ret">Waiting for return...</div>
+            `;
+            stackContainer.appendChild(frame);
+        }
+
+        function updateFrameReturn(id, val) {
+            const retDiv = document.getElementById(`${id}-ret`);
+            if (retDiv) {
+                retDiv.style.display = 'block';
+                retDiv.innerHTML = `Returning: ${val}`;
+            }
+        }
+
+        function removeFrame(id) {
+            const frame = document.getElementById(id);
+            if (frame) {
+                frame.style.opacity = '0';
+                setTimeout(() => frame.remove(), 400); // Wait for fade out
+            }
+        }
+
+        function highlightLine(lineId) {
+            // Remove all active classes
+            document.querySelectorAll('.line').forEach(el => el.classList.remove('active'));
+            if (lineId) {
+                document.getElementById(lineId).classList.add('active');
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+    </script>
+</body>
+</html>

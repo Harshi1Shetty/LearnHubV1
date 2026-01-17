@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = '/api';
 
 export const generateQuiz = async (topic, subtopic, difficulty, language, roadmapId) => {
   try {

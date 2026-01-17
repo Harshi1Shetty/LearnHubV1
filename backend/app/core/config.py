@@ -1,13 +1,9 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv()
-
-class Settings:
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
-    SERPER_API_KEY: str = os.getenv("SERPER_API_KEY", "")
-    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+class Settings(BaseSettings):
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3:8b"
+    SERPER_API_KEY: str = "e48606b50c93d1e7fd9ab141d617cbebccce8bbe"
 
 settings = Settings()
+

@@ -1,0 +1,47 @@
+.avatar-container {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: auto;
+}
+
+.avatar-face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Mouth positioning */
+.avatar-mouth {
+  position: absolute;
+  width: 60px;
+  left: 47%;
+  top: 66%;
+  transform: translateX(-50%) scaleY(0.4);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Speaking animation */
+.avatar-mouth.speaking {
+  opacity: 1;
+  animation: talk 0.38s infinite ease-in-out;
+}
+
+@keyframes talk {
+  0% {
+    transform: translateX(-50%) scaleY(0.3);
+  }
+  50% {
+    transform: translateX(-50%) scaleY(1);
+  }
+  100% {
+    transform: translateX(-50%) scaleY(0.3);
+  }
+}
+.avatar-draggable {
+  position: fixed;
+  z-index: 9999;
+  user-select: none;
+}

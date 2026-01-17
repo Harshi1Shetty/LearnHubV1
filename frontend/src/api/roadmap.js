@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = '/api';
 
 export const generateRoadmap = async (topic, difficulty, language = "English", interest = "", objective = "", userId) => {
   try {

@@ -62,7 +62,7 @@ const CodingSessions = () => {
                         <div className="logo-icon">
                             <Brain className="icon" />
                         </div>
-                        <h1 className="logo-title">LearnHub</h1>
+                        <h1 className="logo-title">Learnhub.SAKEC</h1>
                     </div>
                     <div className="header-actions">
                         <span className="welcome-text">Welcome, {user.username}</span>

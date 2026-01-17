@@ -70,7 +70,7 @@ const CodingTutor = () => {
 
     try {
       // Prepare for streaming response
-      const response = await fetch('http://localhost:8000/api/coding/chat', {
+      const response = await fetch('/api/coding/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const CodingTutor = () => {
             <div className="logo-icon">
               <Brain className="icon" />
             </div>
-            <h1 className="logo-title">LearnHub</h1>
+            <h1 className="logo-title">Learnhub.SAKEC</h1>
           </div>
           <div className="header-actions">
             <span className="welcome-text">Welcome, {user?.username}</span>

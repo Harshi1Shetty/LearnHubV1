@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api/resources';
+const API_URL = '/api/resources';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -23,6 +23,15 @@ export const resourcesApi = {
             headers: { ...getAuthHeaders() }
         });
         if (!response.ok) throw new Error('Failed to fetch resources');
+        return response.json();
+    },
+
+    // Get resource details
+    getMetadata: async (id) => {
+        const response = await fetch(`${API_URL}/${id}/metadata`, {
+            headers: { ...getAuthHeaders() }
+        });
+        if (!response.ok) throw new Error('Failed to fetch resource details');
         return response.json();
     },
 

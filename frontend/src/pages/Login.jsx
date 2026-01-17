@@ -50,14 +50,14 @@ const Login = () => {
             <div className="logo-icon" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
               <Brain className="icon" style={{ color: 'white' }} />
             </div>
-            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>LearnHub</span>
+            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>Learnhub.SAKEC</span>
           </div>
 
           {/* Main Heading */}
           <div className="heading-container">
             <h1 className="main-heading">
               Welcome to<br />
-              LearnHub
+              Learnhub.SAKEC
             </h1>
             <p className="main-subtext">
               Your self-paced AI learning companion. Build knowledge systematically with personalized learning journeys, structured syllabus & revision, and comprehensive interview preparation.
@@ -97,7 +97,7 @@ const Login = () => {
             <div className="logo-icon" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}>
               <Brain className="icon" style={{ color: 'white' }} />
             </div>
-            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>LearnHub</span>
+            <span className="logo-text" style={{ color: 'white', fontWeight: '700' }}>Learnhub.SAKEC</span>
           </div>
 
           {/* Auth Card */}

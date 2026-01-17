@@ -13,9 +13,9 @@ async def start_session(request: CreateSessionRequest):
     with get_db() as conn:
         c = conn.cursor()
         c.execute("""
-            INSERT INTO coding_sessions (user_id, language, title)
-            VALUES (?, ?, ?)
-        """, (request.user_id, request.language, f"{request.language} - {request.topic}"))
+            INSERT INTO coding_sessions (user_id, language, title, problem_description)
+            VALUES (?, ?, ?, ?)
+        """, (request.user_id, request.language, f"{request.language} - {request.topic}", request.topic))
         conn.commit()
         session_id = c.lastrowid
         

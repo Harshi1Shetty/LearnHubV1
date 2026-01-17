@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api/tutor';
+const API_URL = '/api/tutor';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');

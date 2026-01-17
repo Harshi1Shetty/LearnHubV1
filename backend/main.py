@@ -1,13 +1,19 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import roadmap, content, auth, quiz, coding, resources, tutor
+from app.api.routes import roadmap, content, auth, quiz, coding, resources, tutor, interview, materials
 from app.db import init_db
+import os
 
 app = FastAPI(title="AI EdTech Backend", version="1.0.0")
 
 # Initialize Database
 init_db()
+
+# Mount uploads for static access (Simulations)
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # CORS Configuration
 origins = [
@@ -30,6 +36,9 @@ app.include_router(quiz.router, prefix="/api/quiz", tags=["quiz"])
 app.include_router(coding.router, prefix="/api/coding", tags=["coding"])
 app.include_router(resources.router, prefix="/api/resources", tags=["resources"])
 app.include_router(tutor.router, prefix="/api/tutor", tags=["tutor"])
+
+app.include_router(interview.router, prefix="/api/interview", tags=["interview"])
+app.include_router(materials.router, prefix="/api/materials", tags=["materials"])
 
 @app.get("/")
 async def root():

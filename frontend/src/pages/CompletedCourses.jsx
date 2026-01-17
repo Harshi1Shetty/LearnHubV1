@@ -16,10 +16,7 @@ const CompletedCourses = () => {
   const fetchCompletedCourses = async () => {
     try {
       const data = await getUserRoadmaps(user.id);
-      const completed = data.filter((_, index) => index % 3 === 0).map(course => ({
-        ...course,
-        progress: 100
-      }));
+      const completed = data.filter(course => (course.progress || 0) === 100);
       setCourses(completed);
     } catch (error) {
       console.error("Failed to fetch courses", error);

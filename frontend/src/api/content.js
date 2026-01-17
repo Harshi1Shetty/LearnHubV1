@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = '/api';
 
 export const generateContent = async (topic, subtopic, mode = "story", difficulty = "Normal", language = "English", images = null, videos = null, roadmapId = null, interest = null) => {
   try {

@@ -221,3 +221,33 @@
     border-radius: 3px;
     font-family: monospace;
 }
+
+/* Microphone Button */
+.tutor-mic-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tutor-mic-btn:hover {
+    color: #4f46e5;
+    background-color: #f3f4f6;
+    border-radius: 50%;
+}
+
+.tutor-mic-btn.listening {
+    color: #ef4444;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}

@@ -28,6 +28,9 @@ def init_db():
             interest TEXT,
             objective TEXT,
             roadmap_json TEXT NOT NULL,
+            source_type TEXT DEFAULT 'generative', -- 'generative' or 'upload'
+            file_path TEXT, -- Path to uploaded file if source_type is 'upload'
+            vector_db_path TEXT, -- Path to vector store
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -41,6 +44,21 @@ def init_db():
 
     try:
         c.execute("ALTER TABLE roadmaps ADD COLUMN objective TEXT")
+    except sqlite3.OperationalError:
+        pass
+        
+    try:
+        c.execute("ALTER TABLE roadmaps ADD COLUMN source_type TEXT DEFAULT 'generative'")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE roadmaps ADD COLUMN file_path TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        c.execute("ALTER TABLE roadmaps ADD COLUMN vector_db_path TEXT")
     except sqlite3.OperationalError:
         pass
 
@@ -98,6 +116,48 @@ def init_db():
     ''')
 
     # Coding Sessions
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS coding_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            problem_description TEXT NOT NULL,
+            code TEXT,
+            language TEXT NOT NULL,
+            messages TEXT, -- JSON list of chat messages
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Materials Table (Learn Your Material)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            interest TEXT,
+            filename TEXT NOT NULL,
+            vector_db_path TEXT NOT NULL,
+            roadmap_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Material Content Cache
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS material_content (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            material_id INTEGER NOT NULL,
+            node_label TEXT NOT NULL,
+            content_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (material_id) REFERENCES materials (id),
+            UNIQUE(material_id, node_label)
+        )
+    ''')
     c.execute('''
         CREATE TABLE IF NOT EXISTS coding_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

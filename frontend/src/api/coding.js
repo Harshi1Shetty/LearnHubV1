@@ -1,5 +1,5 @@
 // frontend/src/api/coding.js
-const API_URL = 'http://localhost:8000/api/coding';
+const API_URL = '/api/coding';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');

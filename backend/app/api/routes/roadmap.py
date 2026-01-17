@@ -14,21 +14,66 @@ class RoadmapListResponse(BaseModel):
     language: str
     difficulty: str
     created_at: str
+    progress: int = 0
 
 @router.get("/user/{user_id}", response_model=List[RoadmapListResponse])
 async def get_user_roadmaps(user_id: int):
     with get_db() as conn:
         c = conn.cursor()
-        c.execute("SELECT id, topic, language, difficulty, created_at FROM roadmaps WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+        c.execute("SELECT id, topics as topic, language, difficulty, created_at, roadmap_json FROM roadmaps WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
         rows = c.fetchall()
-        return [dict(row) for row in rows]
+        
+        result = []
+        for row in rows:
+            # Calculate Progress
+            progress = 0
+            try:
+                data = json.loads(row["roadmap_json"])
+                total_nodes = 0
+                
+                # Check if it is a flat list 'nodes' (saved state) or hierarchical 'roadmap'
+                if "nodes" in data:
+                    total_nodes = len(data["nodes"])
+                elif "roadmap" in data:
+                    # Recursive count
+                    def count_nodes(nodes):
+                        count = 0
+                        for n in nodes:
+                            count += 1
+                            if "children" in n and n["children"]:
+                                count += count_nodes(n["children"])
+                        return count
+                    total_nodes = count_nodes(data["roadmap"])
+                
+                # Calculate Completed Nodes from user_knowledge
+                # We count how many subtopics for this topic have status='expert'
+                c.execute("SELECT COUNT(*) FROM user_knowledge WHERE user_id = ? AND topic = ? AND status = 'expert'", (user_id, row["topic"]))
+                completed_nodes = c.fetchone()[0]
+                
+                progress = int((completed_nodes / total_nodes * 100)) if total_nodes > 0 else 0
+                if progress > 100: progress = 100 
+            
+            except Exception as e:
+                print(f"Error calc progress for roadmap {row['id']}: {e}")
+                progress = 0
+
+            result.append({
+                "id": row["id"],
+                "topic": row["topic"],
+                "language": row["language"],
+                "difficulty": row["difficulty"],
+                "created_at": row["created_at"],
+                "progress": progress
+            })
+            
+        return result
 
 @router.get("/{roadmap_id}", response_model=RoadmapResponse)
 async def get_roadmap(roadmap_id: int):
     with get_db() as conn:
         c = conn.cursor()
         # Retrieve 'interest' and 'objective'
-        c.execute("SELECT roadmap_json, difficulty, language, user_id, topic, interest, objective FROM roadmaps WHERE id = ?", (roadmap_id,))
+        c.execute("SELECT roadmap_json, difficulty, language, user_id, topics as topic, interest, objective FROM roadmaps WHERE id = ?", (roadmap_id,))
         row = c.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Roadmap not found")
@@ -46,6 +91,10 @@ async def get_roadmap(roadmap_id: int):
                  data["objective"] = row["objective"]
              except Exception:
                  data["objective"] = None # Handle if column logic fails somehow
+
+        # Inject topic if missing
+        if "topic" not in data:
+            data["topic"] = row["topic"]
 
         # Fetch user progress
         c.execute("SELECT subtopic, mastery_score, status FROM user_knowledge WHERE user_id = ? AND topic = ?", (row["user_id"], row["topic"]))
@@ -106,7 +155,7 @@ async def create_roadmap(request: CreateRoadmapRequest):
         with get_db() as conn:
             c = conn.cursor()
             c.execute("""
-                INSERT INTO roadmaps (user_id, topic, language, difficulty, interest, objective, roadmap_json)
+                INSERT INTO roadmaps (user_id, topics, language, difficulty, interest, objective, roadmap_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (request.user_id, request.topic, request.language, request.difficulty, request.interest, request.objective, roadmap_data.json()))
             conn.commit()

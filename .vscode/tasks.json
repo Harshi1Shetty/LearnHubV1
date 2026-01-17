@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Backend Requirements",
+            "type": "shell",
+            "command": "pip install -r backend/requirements.txt",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Run Backend Project",
+            "type": "shell",
+            "command": "cd backend && python main.py",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Run Frontend Project",
+            "type": "shell",
+            "command": "cd frontend && npm run dev",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Start All",
+            "dependsOn": ["Run Backend Project", "Run Frontend Project"],
+            "problemMatcher": []
+        }
+    ]
+}

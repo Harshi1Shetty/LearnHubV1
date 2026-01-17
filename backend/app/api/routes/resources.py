@@ -20,16 +20,15 @@ async def get_recommendations(user_id: int):
     with get_db() as conn:
         c = conn.cursor()
         
-        # 1. Get User's Roadmap Topics & Interests for context
+        # 1. Get User's Roadmap Topics (ignoring interests, taking ALL history)
         c.execute("""
-            SELECT topic, interest, difficulty 
+            SELECT topics as topic, difficulty 
             FROM roadmaps 
             WHERE user_id = ? 
-            ORDER BY created_at DESC 
-            LIMIT 5
+            ORDER BY created_at DESC
         """, (user_id,))
         user_roadmaps = c.fetchall()
-        print(f"DEBUG: Found {len(user_roadmaps)} recent roadmaps/interests for context")
+        print(f"DEBUG: Found {len(user_roadmaps)} total roadmaps for context")
         
         if not user_roadmaps:
              print("DEBUG: No user history found. Returning fresh fallback content.")
@@ -41,7 +40,6 @@ async def get_recommendations(user_id: int):
         search_terms = []
         for rm in user_roadmaps:
             if rm['topic']: search_terms.append(rm['topic'])
-            if rm['interest']: search_terms.append(rm['interest'])
         
         # Dedup terms
         search_terms = list(set([t for t in search_terms if t]))
@@ -137,6 +135,16 @@ async def get_resources():
         c.execute("SELECT * FROM resources ORDER BY created_at DESC")
         rows = c.fetchall()
         return [dict(row) for row in rows]
+
+@router.get("/{resource_id}/metadata")
+async def get_resource_metadata(resource_id: int):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("SELECT * FROM resources WHERE id = ?", (resource_id,))
+        row = c.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Resource not found")
+        return dict(row)
 
 @router.get("/download/{resource_id}")
 async def download_resource(resource_id: int):

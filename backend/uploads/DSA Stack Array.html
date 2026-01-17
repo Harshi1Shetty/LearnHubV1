@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Simulation: Array Implementation</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --highlight-color: #e74c3c;
+            --success-color: #2ecc71;
+            --bg-color: #f4f7f6;
+            --box-size: 60px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        /* Layout Container */
+        .container {
+            display: flex;
+            gap: 50px;
+            align-items: flex-start;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Controls Section */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button#pushBtn { background-color: var(--success-color); }
+        button#popBtn { background-color: var(--highlight-color); }
+        button#peekBtn { background-color: var(--accent-color); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid var(--primary-color);
+            font-size: 14px;
+            color: #555;
+            min-height: 40px;
+        }
+
+        /* Visualization Section */
+        .visualizer {
+            display: flex;
+            flex-direction: column-reverse; /* Stack grows upwards */
+            gap: 5px;
+            padding: 20px;
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            min-height: 350px; /* Space for max elements */
+            width: 150px;
+            position: relative;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .stack-bucket-label {
+            position: absolute;
+            bottom: -30px;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        /* Individual Stack Items */
+        .stack-item {
+            width: 120px;
+            height: 50px;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Array Index Labels */
+        .stack-item::before {
+            content: attr(data-index);
+            position: absolute;
+            left: -40px;
+            color: #95a5a6;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        /* Top Pointer */
+        .top-pointer {
+            position: absolute;
+            right: -80px;
+            color: var(--highlight-color);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            transition: bottom 0.3s ease;
+        }
+        
+        .top-pointer::before {
+            content: "← TOP";
+            margin-left: 5px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: var(--highlight-color); }
+            100% { transform: scale(1); }
+        }
+
+        .peek-anim {
+            animation: highlight 0.5s ease;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Stack Visualization</h1>
+    <p>Array Implementation (LIFO Structure)</p>
+
+    <div class="container">
+        <div class="controls">
+            <input type="number" id="stackInput" placeholder="Enter number..." onkeypress="handleEnter(event)">
+            <button id="pushBtn" onclick="push()">Push</button>
+            <button id="popBtn" onclick="pop()">Pop</button>
+            <button id="peekBtn" onclick="peek()">Peek</button>
+            
+            <div class="status-box" id="statusBox">
+                Status: Empty Stack ready.
+            </div>
+            
+            <div style="margin-top: 10px; font-size: 12px; color: #888;">
+                <strong>Max Size:</strong> 5 elements
+            </div>
+        </div>
+
+        <div class="visualizer" id="stackContainer">
+            <span class="stack-bucket-label">Base Index [0]</span>
+            </div>
+    </div>
+
+    <script>
+        // Configuration
+        const MAX_SIZE = 5;
+        const stackData = [];
+        
+        // DOM Elements
+        const container = document.getElementById('stackContainer');
+        const inputField = document.getElementById('stackInput');
+        const statusBox = document.getElementById('statusBox');
+
+        // Initial Render
+        renderStack();
+
+        // Handle Enter Key
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                push();
+            }
+        }
+
+        // --- Core Operations ---
+
+        function push() {
+            const value = inputField.value;
+
+            if (value === "") {
+                setStatus("⚠️ Please enter a value to push.", true);
+                return;
+            }
+
+            if (stackData.length >= MAX_SIZE) {
+                setStatus("⛔ Stack Overflow! Cannot push into full stack.", true);
+                return;
+            }
+
+            stackData.push(value);
+            inputField.value = ""; // Clear input
+            inputField.focus();
+            renderStack();
+            setStatus(`✅ Pushed <strong>${value}</strong> to Index ${stackData.length - 1}`);
+        }
+
+        function pop() {
+            if (stackData.length === 0) {
+                setStatus("⛔ Stack Underflow! Cannot pop from empty stack.", true);
+                return;
+            }
+
+            const removedValue = stackData.pop();
+            renderStack();
+            setStatus(`🗑️ Popped <strong>${removedValue}</strong> from stack.`);
+        }
+
+        function peek() {
+            if (stackData.length === 0) {
+                setStatus("⚠️ Stack is empty. Nothing to peek.", true);
+                return;
+            }
+
+            // Visual Highlight Logic
+            const topElement = container.lastElementChild; // Since flex-direction is column-reverse, last child is visually top
+            if (topElement) {
+                topElement.classList.add('peek-anim');
+                // Remove class after animation to allow replay
+                setTimeout(() => topElement.classList.remove('peek-anim'), 500);
+            }
+
+            const topValue = stackData[stackData.length - 1];
+            setStatus(`👀 Top element is <strong>${topValue}</strong> at Index ${stackData.length - 1}`);
+        }
+
+        // --- Rendering Logic ---
+
+        function renderStack() {
+            // Clear current visuals (except the base label)
+            container.innerHTML = '<span class="stack-bucket-label">Base Index [0]</span>';
+
+            // Loop through data and create elements
+            stackData.forEach((value, index) => {
+                const item = document.createElement('div');
+                item.className = 'stack-item';
+                item.innerText = value;
+                item.setAttribute('data-index', `[${index}]`);
+                
+                // Add Top Pointer logic
+                if (index === stackData.length - 1) {
+                    const pointer = document.createElement('div');
+                    pointer.className = 'top-pointer';
+                    // We attach the pointer inside the item so it moves with it
+                    item.appendChild(pointer); 
+                }
+
+                container.appendChild(item);
+            });
+        }
+
+        function setStatus(msg, isError = false) {
+            statusBox.innerHTML = msg;
+            statusBox.style.borderLeftColor = isError ? "#e74c3c" : "#2ecc71";
+        }
+
+    </script>
+</body>
+</html>

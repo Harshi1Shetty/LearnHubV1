@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Simulation: Array Implementation</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --queue-color: #e67e22; /* Orange for Queue items */
+            --bg-color: #f4f7f6;
+            --front-color: #e74c3c; /* Red for Front Pointer */
+            --rear-color: #27ae60;  /* Green for Rear Pointer */
+            --cell-size: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        p { color: #7f8c8d; margin-bottom: 30px; }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 900px;
+        }
+
+        /* Controls Section */
+        .controls-wrapper {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 150px;
+            outline: none;
+        }
+        input:focus { border-color: var(--queue-color); }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #enqueueBtn { background-color: var(--rear-color); }
+        #dequeueBtn { background-color: var(--front-color); }
+        #peekBtn { background-color: #3498db; }
+        #resetBtn { background-color: #95a5a6; margin-left: 20px; }
+
+        /* Visualization Area */
+        .visualizer {
+            position: relative;
+            padding: 60px 20px; /* Space for pointers above/below */
+            margin-bottom: 20px;
+        }
+
+        /* The Array Strip */
+        .array-strip {
+            display: flex;
+            gap: 10px;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #bdc3c7;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: white;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: var(--primary-color);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .cell.filled {
+            background-color: var(--queue-color);
+            color: white;
+            border-style: solid;
+            border-color: #d35400;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Indices */
+        .cell::after {
+            content: attr(data-index);
+            position: absolute;
+            bottom: -30px;
+            font-size: 12px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+
+        /* Pointers */
+        .pointer {
+            position: absolute;
+            width: var(--cell-size);
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: left 0.4s ease-in-out;
+        }
+
+        .pointer-front {
+            top: 10px; /* Above array */
+            color: var(--front-color);
+        }
+        
+        .pointer-rear {
+            bottom: 10px; /* Below array */
+            color: var(--rear-color);
+        }
+
+        .pointer::before {
+            content: '';
+            display: block;
+            margin: 0 auto;
+            width: 0; 
+            height: 0; 
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+        }
+
+        /* Front Arrow pointing DOWN */
+        .pointer-front::after {
+            content: "↓ FRONT";
+            display: block;
+        }
+
+        /* Rear Arrow pointing UP */
+        .pointer-rear::before {
+            border-bottom: 8px solid var(--rear-color);
+            margin-bottom: 5px;
+        }
+        .pointer-rear::after {
+            content: "REAR ↑";
+            display: block;
+        }
+
+        /* Status Box */
+        .status-box {
+            width: 100%;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #bdc3c7;
+            color: #555;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { filter: brightness(1.3); transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .peek-anim { animation: highlight 0.5s ease; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Queue Visualization</h1>
+    <p>Array Implementation (FIFO: First-In-First-Out)</p>
+
+    <div class="container">
+        <div class="controls-wrapper">
+            <div class="input-group">
+                <input type="text" id="queueInput" placeholder="Value..." onkeypress="handleEnter(event)">
+                <button id="enqueueBtn" onclick="enqueue()">Enqueue</button>
+            </div>
+            <button id="dequeueBtn" onclick="dequeue()">Dequeue</button>
+            <button id="peekBtn" onclick="peek()">Peek</button>
+            <button id="resetBtn" onclick="resetQueue()">Reset</button>
+        </div>
+
+        <div class="visualizer" id="visualizerArea">
+            <div id="frontPtr" class="pointer pointer-front" style="left: 0px; display: none;"></div>
+            
+            <div class="array-strip" id="arrayStrip">
+                </div>
+
+            <div id="rearPtr" class="pointer pointer-rear" style="left: 0px; display: none;"></div>
+        </div>
+
+        <div class="status-box" id="statusBox">
+            Status: Queue is Empty.
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CAPACITY = 7;
+        const CELL_WIDTH = 80; // 70px width + 10px gap
+        const START_OFFSET = 17; // Padding offset
+        
+        // State
+        let queueArr = new Array(CAPACITY).fill(null);
+        let front = -1;
+        let rear = -1;
+
+        // DOM Elements
+        const arrayStrip = document.getElementById('arrayStrip');
+        const statusBox = document.getElementById('statusBox');
+        const inputField = document.getElementById('queueInput');
+        const frontPtr = document.getElementById('frontPtr');
+        const rearPtr = document.getElementById('rearPtr');
+
+        // Initialization
+        initGrid();
+
+        function initGrid() {
+            arrayStrip.innerHTML = '';
+            for (let i = 0; i < CAPACITY; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.setAttribute('data-index', `[${i}]`);
+                cell.id = `cell-${i}`;
+                arrayStrip.appendChild(cell);
+            }
+        }
+
+        function handleEnter(event) {
+            if (event.key === "Enter") enqueue();
+        }
+
+        // --- Core Operations ---
+
+        function enqueue() {
+            const val = inputField.value;
+            if (val === "") {
+                setStatus("⚠️ Enter a value first.", true);
+                return;
+            }
+
+            if (rear === CAPACITY - 1) {
+                setStatus("⛔ Queue Overflow! Rear reached end of array.", true);
+                return;
+            }
+
+            // Logic for first element
+            if (front === -1) front = 0;
+            
+            rear++;
+            queueArr[rear] = val;
+
+            updateCell(rear, val, true);
+            updatePointers();
+            setStatus(`✅ Enqueued <strong>${val}</strong> at Index ${rear}`);
+            inputField.value = "";
+            inputField.focus();
+        }
+
+        function dequeue() {
+            if (front === -1 || front > rear) {
+                setStatus("⛔ Queue Underflow! No elements to remove.", true);
+                return;
+            }
+
+            const removedVal = queueArr[front];
+            updateCell(front, "", false); // clear visual
+            
+            // Advance front
+            front++;
+
+            // Reset check: If queue becomes empty after dequeue
+            if (front > rear) {
+                front = -1;
+                rear = -1;
+                updatePointers(); // Hide pointers
+                setStatus(`🗑️ Dequeued <strong>${removedVal}</strong>. Queue is now completely empty (Reset).`);
+            } else {
+                updatePointers();
+                setStatus(`🗑️ Dequeued <strong>${removedVal}</strong>. Front moved to Index ${front}.`);
+            }
+        }
+
+        function peek() {
+            if (front === -1 || front > rear) {
+                setStatus("⚠️ Queue is empty.", true);
+                return;
+            }
+            
+            const cell = document.getElementById(`cell-${front}`);
+            cell.classList.add('peek-anim');
+            setTimeout(() => cell.classList.remove('peek-anim'), 500);
+
+            setStatus(`👀 Front element is <strong>${queueArr[front]}</strong> at Index ${front}`);
+        }
+
+        function resetQueue() {
+            front = -1;
+            rear = -1;
+            queueArr.fill(null);
+            initGrid(); // Re-render empty cells
+            updatePointers();
+            setStatus("🔄 Queue has been reset.");
+        }
+
+        // --- Visual Helpers ---
+
+        function updateCell(index, value, isFilled) {
+            const cell = document.getElementById(`cell-${index}`);
+            cell.innerText = value;
+            if (isFilled) {
+                cell.classList.add('filled');
+            } else {
+                cell.classList.remove('filled');
+            }
+        }
+
+        function updatePointers() {
+            // Hide pointers if empty
+            if (front === -1) {
+                frontPtr.style.display = 'none';
+                rearPtr.style.display = 'none';
+                return;
+            }
+
+            frontPtr.style.display = 'block';
+            rearPtr.style.display = 'block';
+
+            // Calculate pixel positions
+            // Formula: Offset + (Index * (Width + Gap))
+            const frontPos = START_OFFSET + (front * CELL_WIDTH);
+            const rearPos = START_OFFSET + (rear * CELL_WIDTH);
+
+            frontPtr.style.left = `${frontPos}px`;
+            rearPtr.style.left = `${rearPos}px`;
+        }
+
+        function setStatus(msg, isError = false) {
+            statusBox.innerHTML = msg;
+            statusBox.style.borderLeftColor = isError ? "#e74c3c" : "#2ecc71";
+        }
+
+    </script>
+</body>
+</html>
